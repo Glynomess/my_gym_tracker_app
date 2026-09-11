@@ -959,9 +959,16 @@
     { name: 'Скручивания', muscle: 'abs' }
   ];
 
-  var exercises = JSON.parse(localStorage.getItem('exercises') || 'null') || DEFAULT_EXERCISES;
+  var exercises = JSON.parse(localStorage.getItem('exercises') || 'null');
+if (!Array.isArray(exercises) || exercises.length === 0) exercises = DEFAULT_EXERCISES.slice();
+
   var history = JSON.parse(localStorage.getItem('history') || '[]');
-  var settings = JSON.parse(localStorage.getItem('settings') || '{"theme":"dark","unit":"kg"}');
+if (!Array.isArray(history)) history = [];
+
+  var settings = JSON.parse(localStorage.getItem('settings') || 'null');
+if (typeof settings !== 'object' || settings === null || !settings.theme) {
+  settings = { theme: 'dark', unit: 'kg' };
+}
 
   var selectedDate = new Date();
   var weekStart = getMonday(new Date());
