@@ -187,16 +187,6 @@
     line-height: 1.5;
   }
 
-  .exercise-item {
-    background: var(--bg-card);
-    border-radius: var(--radius);
-    margin-bottom: 10px;
-    border: 1px solid var(--border);
-    overflow: hidden;
-    position: relative;
-    transition: background 0.15s;
-  }
-
   .swipe-wrap {
     position: relative;
     overflow: hidden;
@@ -214,7 +204,6 @@
     border: 1px solid var(--border);
   }
   .swipe-content.dragging { transition: none; }
-  .swipe-content .exercise-item { margin-bottom: 0; border: none; }
 
   .swipe-delete {
     position: absolute;
@@ -239,6 +228,12 @@
   }
   .swipe-delete svg { width: 22px; height: 22px; }
   .swipe-delete:active { opacity: 0.85; }
+
+  .exercise-item {
+    background: transparent;
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
 
   .exercise-header {
     display: flex;
@@ -453,7 +448,7 @@
   .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0,0,0,0.55);
     z-index: 200;
     opacity: 0;
     pointer-events: none;
@@ -474,8 +469,34 @@
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     max-height: 85vh;
     overflow-y: auto;
+    position: relative;
   }
   .modal-backdrop.show .modal { transform: translateY(0); }
+
+  .modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: none;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    z-index: 10;
+    transition: all 0.15s;
+  }
+  .modal-close:active {
+    background: var(--bg);
+    color: var(--text);
+    transform: scale(0.92);
+  }
+  .modal-close svg { width: 18px; height: 18px; }
 
   .modal h3 {
     font-size: 20px;
@@ -838,6 +859,12 @@
 
 <div class="modal-backdrop" id="pickerBackdrop">
   <div class="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeExercisePicker()" aria-label="Закрыть">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
     <h3>Выбрать упражнение</h3>
 
     <div class="search-wrap">
@@ -862,6 +889,12 @@
 
 <div class="modal-backdrop" id="createBackdrop">
   <div class="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeCreateExercise()" aria-label="Закрыть">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
     <h3>Новое упражнение</h3>
 
     <div class="modal-label">Название</div>
@@ -1102,7 +1135,6 @@
   }
 
   function getEmptyText() {
-    var isToday = sameDay(selectedDate, new Date());
     var now = new Date();
     now.setHours(0,0,0,0);
     var sel = new Date(selectedDate);
@@ -1506,14 +1538,17 @@
     location.reload();
   }
 
-  applyTheme();
-  render();
-
+  // Закрытие модалок по клику на фон
   document.querySelectorAll('.modal-backdrop').forEach(function(m) {
     m.addEventListener('click', function(e) {
-      if (e.target === m) m.classList.remove('show');
+      if (e.target === m) {
+        m.classList.remove('show');
+      }
     });
   });
+
+  applyTheme();
+  render();
 </script>
 </body>
 </html>
