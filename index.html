@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Gym Tracker</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init();</script>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
 
@@ -913,6 +911,7 @@
 </div>
 
 <script>
+(function() {
   var tg = window.Telegram ? window.Telegram.WebApp : null;
   if (tg) { tg.ready(); tg.expand(); }
 
@@ -960,18 +959,18 @@
   ];
 
   var exercises = JSON.parse(localStorage.getItem('exercises') || 'null');
-if (!Array.isArray(exercises) || exercises.length === 0) exercises = DEFAULT_EXERCISES.slice();
+  if (!Array.isArray(exercises) || exercises.length === 0) exercises = DEFAULT_EXERCISES.slice();
 
-  var history = [];
-try {
-  var storedHistory = JSON.parse(localStorage.getItem('history') || '[]');
-  if (Array.isArray(storedHistory)) history = storedHistory;
-} catch (e) {}
+  var workoutHistory = [];
+  try {
+    var storedHistory = JSON.parse(localStorage.getItem('history') || '[]');
+    if (Array.isArray(storedHistory)) workoutHistory = storedHistory;
+  } catch (e) {}
 
   var settings = JSON.parse(localStorage.getItem('settings') || 'null');
-if (typeof settings !== 'object' || settings === null || !settings.theme) {
-  settings = { theme: 'dark', unit: 'kg' };
-}
+  if (typeof settings !== 'object' || settings === null || !settings.theme) {
+    settings = { theme: 'dark', unit: 'kg' };
+  }
 
   var selectedDate = new Date();
   var weekStart = getMonday(new Date());
@@ -999,46 +998,49 @@ if (typeof settings !== 'object' || settings === null || !settings.theme) {
 
   function save() {
     localStorage.setItem('exercises', JSON.stringify(exercises));
-    localStorage.setItem('history', JSON.stringify(history));
+    localStorage.setItem('history', JSON.stringify(workoutHistory));
     localStorage.setItem('settings', JSON.stringify(settings));
   }
 
-  function applyTheme() {
+  window.applyTheme = function() {
     document.documentElement.setAttribute('data-theme', settings.theme);
-    document.getElementById('themeDarkBtn').classList.toggle('active', settings.theme === 'dark');
-    document.getElementById('themeLightBtn').classList.toggle('active', settings.theme === 'light');
-    document.getElementById('unitKgBtn').classList.toggle('active', settings.unit === 'kg');
-    document.getElementById('unitLbBtn').classList.toggle('active', settings.unit === 'lb');
-  }
+    var el;
+    el = document.getElementById('themeDarkBtn'); if (el) el.classList.toggle('active', settings.theme === 'dark');
+    el = document.getElementById('themeLightBtn'); if (el) el.classList.toggle('active', settings.theme === 'light');
+    el = document.getElementById('unitKgBtn'); if (el) el.classList.toggle('active', settings.unit === 'kg');
+    el = document.getElementById('unitLbBtn'); if (el) el.classList.toggle('active', settings.unit === 'lb');
+  };
 
-  function setTheme(t) {
+  window.setTheme = function(t) {
     settings.theme = t;
     save();
-    applyTheme();
+    window.applyTheme();
     if (tg) tg.HapticFeedback.selectionChanged();
-  }
+  };
 
-  function setUnit(u) {
+  window.setUnit = function(u) {
     settings.unit = u;
     save();
-    applyTheme();
-    render();
+    window.applyTheme();
+    window.render();
     if (tg) tg.HapticFeedback.selectionChanged();
-  }
+  };
 
-  function render() {
-    renderMonthTitle();
-    renderCalendar();
-    renderContent();
-  }
+  window.render = function() {
+    window.renderMonthTitle();
+    window.renderCalendar();
+    window.renderContent();
+  };
 
-  function renderMonthTitle() {
+  window.renderMonthTitle = function() {
     var months = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
-    document.getElementById('monthTitle').textContent = months[weekStart.getMonth()];
-  }
+    var el = document.getElementById('monthTitle');
+    if (el) el.textContent = months[weekStart.getMonth()];
+  };
 
-  function renderCalendar() {
+  window.renderCalendar = function() {
     var container = document.getElementById('calDays');
+    if (!container) return;
     var dayNames = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
     var today = new Date();
     var html = '';
@@ -1049,8 +1051,8 @@ if (typeof settings !== 'object' || settings === null || !settings.theme) {
 
       var isToday = sameDay(d, today);
       var isSelected = sameDay(d, selectedDate);
-      var hasWorkout = history.some(function(w) {
-        return sameDay(new Date(w.date), d) && w.sets.length > 0;
+      var hasWorkout = workoutHistory.some(function(w) {
+        return sameDay(new Date(w.date), d) && w.sets && w.sets.length > 0;
       });
 
       var cls = 'cal-day';
@@ -1064,12 +1066,13 @@ if (typeof settings !== 'object' || settings === null || !settings.theme) {
         '</div>';
     }
     container.innerHTML = html;
-  }
+  };
 
-  function renderContent() {
+  window.renderContent = function() {
     var area = document.getElementById('contentArea');
-    var workout = history.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
-    var hasSets = workout && workout.sets.length > 0;
+    if (!area) return;
+    var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
+    var hasSets = workout && workout.sets && workout.sets.length > 0;
 
     if (!hasSets) {
       area.innerHTML = '<div class="empty-state">' +
@@ -1139,12 +1142,12 @@ if (typeof settings !== 'object' || settings === null || !settings.theme) {
     document.querySelectorAll('.exercise-item').forEach(function(el) {
       if (el.classList.contains('open')) {
         var body = el.querySelector('.exercise-body');
-        body.style.maxHeight = body.scrollHeight + 'px';
+        if (body) body.style.maxHeight = body.scrollHeight + 'px';
       }
     });
 
     attachSwipeHandlers();
-  }
+  };
 
   function getEmptyText() {
     var now = new Date();
@@ -1153,9 +1156,9 @@ if (typeof settings !== 'object' || settings === null || !settings.theme) {
     sel.setHours(0,0,0,0);
 
     if (sel > now) return 'Тренировка ещё не начата';
-    if (history.length === 0) return 'Начни свою первую тренировку 💪';
+    if (workoutHistory.length === 0) return 'Начни свою первую тренировку 💪';
 
-    var lastWorkout = history.find(function(w) { return w.sets.length > 0; });
+    var lastWorkout = workoutHistory.find(function(w) { return w.sets && w.sets.length > 0; });
     if (!lastWorkout) return 'Начни свою первую тренировку 💪';
 
     var lastDate = new Date(lastWorkout.date);
@@ -1174,24 +1177,24 @@ if (typeof settings !== 'object' || settings === null || !settings.theme) {
     return 'дней';
   }
 
-  function selectDay(key) {
+  window.selectDay = function(key) {
     var parts = key.split('-').map(Number);
     selectedDate = new Date(parts[0], parts[1]-1, parts[2], 12, 0, 0);
     closeAllSwipes();
-    render();
+    window.render();
     if (tg) tg.HapticFeedback.selectionChanged();
-  }
+  };
 
-  function shiftWeek(dir) {
+  window.shiftWeek = function(dir) {
     weekStart.setDate(weekStart.getDate() + dir * 7);
     closeAllSwipes();
-    render();
+    window.render();
     if (tg) tg.HapticFeedback.selectionChanged();
-  }
+  };
 
-  function toggleExercise(name) {
+  window.toggleExercise = function(name) {
     if (openSwipeEl) { closeAllSwipes(); return; }
-    var workout = history.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
+    var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
     if (!workout) return;
     if (!workout._open) workout._open = {};
     workout._open[name] = !workout._open[name];
@@ -1203,24 +1206,24 @@ if (typeof settings !== 'object' || settings === null || !settings.theme) {
 
     if (el.classList.contains('open')) {
       el.classList.remove('open');
-      body.style.maxHeight = '0px';
+      if (body) body.style.maxHeight = '0px';
     } else {
       el.classList.add('open');
-      body.style.maxHeight = body.scrollHeight + 'px';
+      if (body) body.style.maxHeight = body.scrollHeight + 'px';
     }
     if (tg) tg.HapticFeedback.impactOccurred('light');
-  }
+  };
 
-  function updateSet(index, field, value) {
-    var workout = history.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
-    if (!workout || !workout.sets[index]) return;
+  window.updateSet = function(index, field, value) {
+    var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
+    if (!workout || !workout.sets || !workout.sets[index]) return;
     var num = parseFloat(value);
     workout.sets[index][field] = (isNaN(num) || num <= 0) ? 0 : num;
     save();
-  }
+  };
 
-  function addSetToExercise(exName) {
-    var workout = history.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
+  window.addSetToExercise = function(exName) {
+    var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
     if (!workout) return;
 
     var rec = getLastSet(exName);
@@ -1231,40 +1234,41 @@ if (typeof settings !== 'object' || settings === null || !settings.theme) {
       time: Date.now()
     });
     save();
-    renderContent();
+    window.renderContent();
 
     setTimeout(function() {
       var el = document.querySelector('.exercise-item[data-ex="' + CSS.escape(exName) + '"]');
       if (el) {
         el.classList.add('open');
         var body = el.querySelector('.exercise-body');
-        body.style.maxHeight = body.scrollHeight + 'px';
+        if (body) body.style.maxHeight = body.scrollHeight + 'px';
       }
     }, 30);
 
     if (tg) tg.HapticFeedback.impactOccurred('light');
-  }
+  };
 
-  function deleteExerciseFromWorkout(exName) {
+  window.deleteExerciseFromWorkout = function(exName) {
     closeAllSwipes();
     if (!confirm('Удалить «' + exName + '» из тренировки?')) return;
-    var workout = history.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
+    var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
     if (!workout) return;
 
     workout.sets = workout.sets.filter(function(s) { return s.exercise !== exName; });
     if (workout._open) delete workout._open[exName];
 
     if (workout.sets.length === 0) {
-      history = history.filter(function(w) { return w !== workout; });
+      workoutHistory = workoutHistory.filter(function(w) { return w !== workout; });
     }
     save();
-    render();
+    window.render();
     if (tg) tg.HapticFeedback.notificationOccurred('success');
-  }
+  };
 
   function getLastSet(exName) {
-    for (var i = 0; i < history.length; i++) {
-      var w = history[i];
+    for (var i = 0; i < workoutHistory.length; i++) {
+      var w = workoutHistory[i];
+      if (!w.sets) continue;
       for (var j = w.sets.length - 1; j >= 0; j--) {
         if (w.sets[j].exercise === exName && w.sets[j].weight > 0 && w.sets[j].reps > 0) {
           return w.sets[j];
@@ -1277,6 +1281,7 @@ if (typeof settings !== 'object' || settings === null || !settings.theme) {
   function attachSwipeHandlers() {
     document.querySelectorAll('.swipe-wrap').forEach(function(wrap) {
       var content = wrap.querySelector('.swipe-content');
+      if (!content) return;
       var startX = 0, startY = 0, currentX = 0;
       var isDragging = false, isHorizontal = null;
       var maxSwipe = 90;
@@ -1351,20 +1356,23 @@ if (typeof settings !== 'object' || settings === null || !settings.theme) {
     }
   }
 
-  function openExercisePicker() {
-    document.getElementById('exSearch').value = '';
-    renderExercisePicker();
+  window.openExercisePicker = function() {
+    var search = document.getElementById('exSearch');
+    if (search) search.value = '';
+    renderExercisePicker('');
     document.getElementById('pickerBackdrop').classList.add('show');
-    document.getElementById('exPickerList').scrollTop = 0;
-  }
+    var list = document.getElementById('exPickerList');
+    if (list) list.scrollTop = 0;
+  };
 
-  function closeExercisePicker() {
+  window.closeExercisePicker = function() {
     document.getElementById('pickerBackdrop').classList.remove('show');
-  }
+  };
 
   function renderExercisePicker(filter) {
     filter = filter || '';
     var list = document.getElementById('exPickerList');
+    if (!list) return;
     var lower = filter.toLowerCase();
     var filtered = exercises.filter(function(e) { return e.name.toLowerCase().indexOf(lower) !== -1; });
 
@@ -1376,32 +1384,33 @@ if (typeof settings !== 'object' || settings === null || !settings.theme) {
     list.innerHTML = filtered.map(function(ex) {
       var safe = ex.name.replace(/'/g, "\\'");
       return '<div class="ex-picker-item" onclick="pickExercise(\'' + safe + '\')">' +
-        '<img src="' + ICONS[ex.muscle] + '" alt="" onerror="this.style.opacity=\'0.2\'">' +
+        '<img src="' + (ICONS[ex.muscle] || ICONS.back) + '" alt="" onerror="this.style.opacity=\'0.2\'">' +
         '<div class="ex-picker-name">' + ex.name + '</div>' +
-        '<div class="ex-picker-muscle">' + MUSCLE_LABELS[ex.muscle] + '</div>' +
+        '<div class="ex-picker-muscle">' + (MUSCLE_LABELS[ex.muscle] || '') + '</div>' +
         '</div>';
     }).join('');
   }
 
-  function filterExercises() {
+  window.filterExercises = function() {
     renderExercisePicker(document.getElementById('exSearch').value);
-  }
+  };
 
-  function pickExercise(name) {
+  window.pickExercise = function(name) {
     addExerciseToDay(name);
-    closeExercisePicker();
-    render();
+    window.closeExercisePicker();
+    window.render();
     if (tg) tg.HapticFeedback.impactOccurred('light');
-  }
+  };
 
   function addExerciseToDay(name) {
-    var workout = history.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
+    var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
     if (!workout) {
       workout = { date: selectedDate.toISOString(), sets: [], _open: {} };
-      history.unshift(workout);
-      history.sort(function(a,b) { return new Date(b.date) - new Date(a.date); });
+      workoutHistory.unshift(workout);
+      workoutHistory.sort(function(a,b) { return new Date(b.date) - new Date(a.date); });
     }
     if (!workout._open) workout._open = {};
+    if (!workout.sets) workout.sets = [];
 
     var exists = workout.sets.some(function(s) { return s.exercise === name; });
     if (!exists) {
@@ -1417,9 +1426,10 @@ if (typeof settings !== 'object' || settings === null || !settings.theme) {
     save();
   }
 
-  function openCreateExercise() {
-    closeExercisePicker();
+  window.openCreateExercise = function() {
+    window.closeExercisePicker();
     var grid = document.getElementById('muscleGrid');
+    if (!grid) return;
     grid.innerHTML = Object.keys(MUSCLE_LABELS).map(function(key) {
       return '<button class="muscle-btn ' + (key === 'back' ? 'selected' : '') + '" data-muscle="' + key + '" onclick="pickMuscle(\'' + key + '\')">' +
         '<img src="' + ICONS[key] + '" alt="" onerror="this.style.opacity=\'0.3\'">' +
@@ -1427,24 +1437,25 @@ if (typeof settings !== 'object' || settings === null || !settings.theme) {
         '</button>';
     }).join('');
     pendingMuscle = 'back';
-    document.getElementById('newExName').value = '';
+    var input = document.getElementById('newExName');
+    if (input) input.value = '';
     document.getElementById('createBackdrop').classList.add('show');
-    setTimeout(function() { document.getElementById('newExName').focus(); }, 250);
-  }
+    setTimeout(function() { if (input) input.focus(); }, 250);
+  };
 
-  function closeCreateExercise() {
+  window.closeCreateExercise = function() {
     document.getElementById('createBackdrop').classList.remove('show');
-  }
+  };
 
-  function pickMuscle(key) {
+  window.pickMuscle = function(key) {
     pendingMuscle = key;
     document.querySelectorAll('.muscle-btn').forEach(function(b) {
       b.classList.toggle('selected', b.dataset.muscle === key);
     });
     if (tg) tg.HapticFeedback.selectionChanged();
-  }
+  };
 
-  function saveNewExercise() {
+  window.saveNewExercise = function() {
     var name = document.getElementById('newExName').value.trim();
     if (!name) return alert('Введи название');
     if (exercises.some(function(e) { return e.name === name; })) return alert('Такое упражнение уже есть');
@@ -1452,32 +1463,32 @@ if (typeof settings !== 'object' || settings === null || !settings.theme) {
     exercises.push({ name: name, muscle: pendingMuscle });
     save();
     addExerciseToDay(name);
-    closeCreateExercise();
-    render();
+    window.closeCreateExercise();
+    window.render();
     if (tg) tg.HapticFeedback.notificationOccurred('success');
-  }
+  };
 
-  function openSheet() {
+  window.openSheet = function() {
     document.getElementById('sheetBackdrop').classList.add('show');
     document.getElementById('sheet').classList.add('show');
-  }
-  function closeSheet() {
+  };
+  window.closeSheet = function() {
     document.getElementById('sheetBackdrop').classList.remove('show');
     document.getElementById('sheet').classList.remove('show');
-  }
-  function sheetAction(action) {
-    closeSheet();
-    var workout = history.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
+  };
+  window.sheetAction = function(action) {
+    window.closeSheet();
+    var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
 
     if (action === 'repeat') {
-      if (!workout || workout.sets.length === 0) return alert('Нет тренировки для повтора');
+      if (!workout || !workout.sets || workout.sets.length === 0) return alert('Нет тренировки для повтора');
       var today = new Date();
       today.setHours(12,0,0,0);
-      var todayW = history.find(function(w) { return sameDay(new Date(w.date), today); });
+      var todayW = workoutHistory.find(function(w) { return sameDay(new Date(w.date), today); });
       if (!todayW) {
         todayW = { date: today.toISOString(), sets: [], _open: {} };
-        history.unshift(todayW);
-        history.sort(function(a,b) { return new Date(b.date) - new Date(a.date); });
+        workoutHistory.unshift(todayW);
+        workoutHistory.sort(function(a,b) { return new Date(b.date) - new Date(a.date); });
       }
       todayW.sets = workout.sets.map(function(s) {
         return { exercise: s.exercise, weight: s.weight, reps: s.reps, time: Date.now() };
@@ -1485,17 +1496,17 @@ if (typeof settings !== 'object' || settings === null || !settings.theme) {
       save();
       selectedDate = today;
       weekStart = getMonday(today);
-      render();
+      window.render();
       if (tg) tg.showAlert('Тренировка повторена на сегодня 💪');
     } else if (action === 'delete') {
       if (!workout) return;
       if (!confirm('Удалить тренировку за этот день?')) return;
-      history = history.filter(function(w) { return w !== workout; });
+      workoutHistory = workoutHistory.filter(function(w) { return w !== workout; });
       save();
-      render();
+      window.render();
       if (tg) tg.HapticFeedback.notificationOccurred('success');
     } else if (action === 'share') {
-      if (!workout || workout.sets.length === 0) return;
+      if (!workout || !workout.sets || workout.sets.length === 0) return;
       var msg = 'Тренировка ' + new Date(workout.date).toLocaleDateString('ru-RU') + '\n\n';
       var grouped = {};
       workout.sets.forEach(function(s) {
@@ -1518,7 +1529,7 @@ if (typeof settings !== 'object' || settings === null || !settings.theme) {
         save();
       }
     } else if (action === 'template') {
-      if (!workout || workout.sets.length === 0) return;
+      if (!workout || !workout.sets || workout.sets.length === 0) return;
       var name = prompt('Название программы:', 'Тренировка');
       if (!name) return;
       var templates = JSON.parse(localStorage.getItem('templates') || '[]');
@@ -1530,37 +1541,35 @@ if (typeof settings !== 'object' || settings === null || !settings.theme) {
       localStorage.setItem('templates', JSON.stringify(templates));
       if (tg) tg.showAlert('Программа сохранена: ' + name);
     }
-  }
+  };
 
-  function openSettings() {
+  window.openSettings = function() {
     document.getElementById('screenMain').classList.remove('active');
     document.getElementById('screenSettings').classList.add('active');
     document.getElementById('floatingBar').style.display = 'none';
-  }
-  function closeSettings() {
+  };
+  window.closeSettings = function() {
     document.getElementById('screenSettings').classList.remove('active');
     document.getElementById('screenMain').classList.add('active');
     document.getElementById('floatingBar').style.display = 'flex';
-    render();
-  }
+    window.render();
+  };
 
-  function resetAll() {
+  window.resetAll = function() {
     if (!confirm('Удалить ВСЕ данные? Это необратимо.')) return;
     localStorage.clear();
     location.reload();
-  }
+  };
 
-  // Закрытие модалок по клику на фон
   document.querySelectorAll('.modal-backdrop').forEach(function(m) {
     m.addEventListener('click', function(e) {
-      if (e.target === m) {
-        m.classList.remove('show');
-      }
+      if (e.target === m) m.classList.remove('show');
     });
   });
 
-  applyTheme();
-  render();
+  window.applyTheme();
+  window.render();
+})();
 </script>
 </body>
 </html>
