@@ -18,6 +18,8 @@
     --accent: #ffffff;
     --accent-text: #000000;
     --danger: #ff4d4d;
+    --success: #22c55e;
+    --gold: #fbbf24;
     --border: rgba(255,255,255,0.06);
     --radius: 18px;
     --radius-sm: 12px;
@@ -246,11 +248,11 @@
   .exercise-header:active { background: var(--bg-elevated); }
 
   .exercise-icon {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     object-fit: contain;
     flex-shrink: 0;
-    opacity: 0.85;
+    opacity: 0.9;
   }
 
   .exercise-name {
@@ -258,6 +260,19 @@
     font-size: 16px;
     font-weight: 600;
     letter-spacing: -0.2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .rec-bulb {
+    font-size: 16px;
+    animation: pulse 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
   }
 
   .exercise-chevron {
@@ -274,9 +289,39 @@
     overflow: hidden;
     transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .exercise-item.open .exercise-body { max-height: 2000px; }
+  .exercise-item.open .exercise-body { max-height: 3000px; }
 
   .exercise-body-inner { padding: 0 16px 16px; }
+
+  .rec-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .rec-banner.record {
+    background: rgba(251, 191, 36, 0.12);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    color: var(--gold);
+  }
+
+  .rec-banner.suggest {
+    background: rgba(96, 165, 250, 0.12);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    color: #93c5fd;
+  }
+  [data-theme="light"] .rec-banner.suggest { color: #2563eb; }
+
+  .rec-banner .rec-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+  }
 
   .set-row {
     display: grid;
@@ -317,6 +362,10 @@
   .set-input::placeholder {
     color: var(--text-muted);
     font-weight: 500;
+  }
+
+  .set-input.record-set {
+    color: var(--gold);
   }
 
   .add-set-btn {
@@ -564,10 +613,10 @@
   }
   .ex-picker-item:active { background: var(--bg-card); }
   .ex-picker-item img {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     object-fit: contain;
-    opacity: 0.7;
+    opacity: 0.75;
     flex-shrink: 0;
   }
   .ex-picker-item .ex-picker-name {
@@ -629,8 +678,8 @@
     color: var(--text);
   }
   .muscle-btn img {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     object-fit: contain;
     opacity: 0.7;
   }
@@ -921,8 +970,8 @@
     arms: 'icons/arms.png',
     abs: 'icons/abs.png',
     legs: 'icons/legs.png',
-    neck: 'icons/neck.png',
-    shoulders: 'icons/shoulders.png'
+    shoulders: 'icons/shoulders.png',
+    cardio: 'icons/cardio.png'
   };
 
   var MUSCLE_LABELS = {
@@ -931,8 +980,18 @@
     arms: 'Руки',
     abs: 'Пресс',
     legs: 'Ноги',
-    neck: 'Шея',
-    shoulders: 'Плечи'
+    shoulders: 'Плечи',
+    cardio: 'Кардио'
+  };
+
+  var WEIGHT_STEP = {
+    arms: 1.5,
+    shoulders: 1.5,
+    abs: 1.5,
+    back: 2.5,
+    chest: 2.5,
+    legs: 2.5,
+    cardio: 0
   };
 
   var DEFAULT_EXERCISES = [
@@ -955,7 +1014,13 @@
     { name: 'Бицепс со штангой', muscle: 'arms' },
     { name: 'Трицепс на блоке', muscle: 'arms' },
     { name: 'Планка', muscle: 'abs' },
-    { name: 'Скручивания', muscle: 'abs' }
+    { name: 'Скручивания', muscle: 'abs' },
+    { name: 'Бег', muscle: 'cardio' },
+    { name: 'Велотренажёр', muscle: 'cardio' },
+    { name: 'Скакалка', muscle: 'cardio' },
+    { name: 'Гребля', muscle: 'cardio' },
+    { name: 'Эллипсоид', muscle: 'cardio' },
+    { name: 'Лестница', muscle: 'cardio' }
   ];
 
   var exercises = JSON.parse(localStorage.getItem('exercises') || 'null');
@@ -1000,6 +1065,65 @@
     localStorage.setItem('exercises', JSON.stringify(exercises));
     localStorage.setItem('history', JSON.stringify(workoutHistory));
     localStorage.setItem('settings', JSON.stringify(settings));
+  }
+
+  function getMuscle(name) {
+    var found = exercises.find(function(e) { return e.name === name; });
+    return found ? found.muscle : 'back';
+  }
+
+  function isCardio(name) {
+    return getMuscle(name) === 'cardio';
+  }
+
+  // Рекорд: максимальный вес за всё время (кроме текущей тренировки)
+  function getMaxWeight(exercise, excludeDate) {
+    var max = 0;
+    for (var i = 0; i < workoutHistory.length; i++) {
+      var w = workoutHistory[i];
+      if (excludeDate && sameDay(new Date(w.date), excludeDate)) continue;
+      if (!w.sets) continue;
+      for (var j = 0; j < w.sets.length; j++) {
+        var s = w.sets[j];
+        if (s.exercise === exercise && s.weight > max) {
+          max = s.weight;
+        }
+      }
+    }
+    return max;
+  }
+
+  // Рекомендация повышения: если все подходы последней тренировки >= 12 повторений
+  function getRecommendation(exercise, excludeDate) {
+    if (isCardio(exercise)) return null;
+
+    var lastWorkout = null;
+    for (var i = 0; i < workoutHistory.length; i++) {
+      var w = workoutHistory[i];
+      if (excludeDate && sameDay(new Date(w.date), excludeDate)) continue;
+      if (!w.sets) continue;
+      var exSets = w.sets.filter(function(s) { return s.exercise === exercise && s.weight > 0; });
+      if (exSets.length > 0) {
+        lastWorkout = { date: w.date, sets: exSets };
+        break;
+      }
+    }
+    if (!lastWorkout) return null;
+
+    var allMin12 = lastWorkout.sets.every(function(s) { return s.reps >= 12; });
+    if (!allMin12) return null;
+
+    var muscle = getMuscle(exercise);
+    var step = WEIGHT_STEP[muscle] || 2.5;
+    var lastWeight = lastWorkout.sets[0].weight;
+    var suggested = lastWeight + step;
+
+    return {
+      suggested: suggested,
+      lastWeight: lastWeight,
+      setsCount: lastWorkout.sets.length,
+      reps: lastWorkout.sets[0].reps
+    };
   }
 
   window.applyTheme = function() {
@@ -1088,17 +1212,27 @@
       grouped[s.exercise].push({ index: i, weight: s.weight, reps: s.reps });
     });
 
-    var exMap = {};
-    exercises.forEach(function(e) { exMap[e.name] = e.muscle; });
-
     var html = '';
     Object.keys(grouped).forEach(function(exName) {
       var sets = grouped[exName];
-      var muscle = exMap[exName] || 'back';
+      var muscle = getMuscle(exName);
       var iconSrc = ICONS[muscle] || ICONS.back;
       var isOpen = workout._open && workout._open[exName];
+      var isCardioEx = muscle === 'cardio';
       var safeName = exName.replace(/"/g, '&quot;').replace(/'/g, "\\'");
       var dataAttr = exName.replace(/"/g, '&quot;');
+
+      // Рекомендация (только для не-кардио)
+      var rec = !isCardioEx ? getRecommendation(exName, selectedDate) : null;
+
+      // Рекорд в этой тренировке (для не-кардио)
+      var maxPrev = !isCardioEx ? getMaxWeight(exName, selectedDate) : 0;
+      var isRecord = false;
+      if (!isCardioEx && maxPrev > 0) {
+        for (var k = 0; k < sets.length; k++) {
+          if (sets[k].weight > maxPrev) { isRecord = true; break; }
+        }
+      }
 
       html += '<div class="swipe-wrap" data-ex-wrap="' + dataAttr + '">';
       html += '<button class="swipe-delete" onclick="deleteExerciseFromWorkout(\'' + safeName + '\')">' +
@@ -1110,23 +1244,45 @@
       html += '<div class="exercise-item ' + (isOpen ? 'open' : '') + '" data-ex="' + dataAttr + '">';
       html += '<div class="exercise-header" onclick="toggleExercise(\'' + safeName + '\')">';
       html += '<img class="exercise-icon" src="' + iconSrc + '" alt="" onerror="this.style.opacity=\'0.2\'">';
-      html += '<div class="exercise-name">' + exName + '</div>';
+      html += '<div class="exercise-name">' + exName;
+      if (rec) html += '<span class="rec-bulb">💡</span>';
+      html += '</div>';
       html += '<svg class="exercise-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">';
       html += '<polyline points="6 9 12 15 18 9"/></svg>';
       html += '</div>';
       html += '<div class="exercise-body"><div class="exercise-body-inner">';
 
+      // Баннеры: рекорд и рекомендация
+      if (isRecord) {
+        html += '<div class="rec-banner record"><span class="rec-icon">🏆</span><span>Рекорд! Новый максимум по весу</span></div>';
+      }
+      if (rec) {
+        html += '<div class="rec-banner suggest"><span class="rec-icon">💡</span><span>Пора повысить вес — попробуй ' + rec.suggested + ' кг. Прошлый раз: ' + rec.lastWeight + ' кг × ' + rec.setsCount + '</span></div>';
+      }
+
       sets.forEach(function(s, n) {
+        var isSetRecord = !isCardioEx && maxPrev > 0 && s.weight > maxPrev;
         html += '<div class="set-row">';
         html += '<div class="set-num">' + (n + 1) + '</div>';
-        html += '<input class="set-input" type="number" inputmode="decimal" step="0.5" ' +
-          'value="' + (s.weight > 0 ? s.weight : '') + '" ' +
-          'onfocus="if(this.value===\'0\') this.value=\'\'" ' +
-          'onchange="updateSet(' + s.index + ', \'weight\', this.value)" placeholder="0">';
-        html += '<input class="set-input" type="number" inputmode="numeric" ' +
-          'value="' + (s.reps > 0 ? s.reps : '') + '" ' +
-          'onfocus="if(this.value===\'0\') this.value=\'\'" ' +
-          'onchange="updateSet(' + s.index + ', \'reps\', this.value)" placeholder="0">';
+        if (isCardioEx) {
+          html += '<input class="set-input" type="number" inputmode="decimal" step="0.1" ' +
+            'value="' + (s.weight > 0 ? s.weight : '') + '" ' +
+            'onfocus="if(this.value===\'0\') this.value=\'\'" ' +
+            'onchange="updateSet(' + s.index + ', \'weight\', this.value)" placeholder="мин">';
+          html += '<input class="set-input" type="number" inputmode="decimal" step="0.1" ' +
+            'value="' + (s.reps > 0 ? s.reps : '') + '" ' +
+            'onfocus="if(this.value===\'0\') this.value=\'\'" ' +
+            'onchange="updateSet(' + s.index + ', \'reps\', this.value)" placeholder="км">';
+        } else {
+          html += '<input class="set-input' + (isSetRecord ? ' record-set' : '') + '" type="number" inputmode="decimal" step="0.5" ' +
+            'value="' + (s.weight > 0 ? s.weight : '') + '" ' +
+            'onfocus="if(this.value===\'0\') this.value=\'\'" ' +
+            'onchange="updateSet(' + s.index + ', \'weight\', this.value)" placeholder="кг">';
+          html += '<input class="set-input" type="number" inputmode="numeric" ' +
+            'value="' + (s.reps > 0 ? s.reps : '') + '" ' +
+            'onfocus="if(this.value===\'0\') this.value=\'\'" ' +
+            'onchange="updateSet(' + s.index + ', \'reps\', this.value)" placeholder="повт">';
+        }
         html += '</div>';
       });
 
@@ -1514,8 +1670,15 @@
         grouped[s.exercise].push(s);
       });
       Object.keys(grouped).forEach(function(ex) {
+        var isCardioEx = getMuscle(ex) === 'cardio';
         msg += ex + ':\n';
-        grouped[ex].forEach(function(s, i) { msg += '  ' + (i+1) + '. ' + s.weight + ' кг × ' + s.reps + '\n'; });
+        grouped[ex].forEach(function(s, i) {
+          if (isCardioEx) {
+            msg += '  ' + (i+1) + '. ' + s.weight + ' мин × ' + s.reps + ' км\n';
+          } else {
+            msg += '  ' + (i+1) + '. ' + s.weight + ' кг × ' + s.reps + '\n';
+          }
+        });
         msg += '\n';
       });
       if (navigator.share) navigator.share({ text: msg }).catch(function(){});
