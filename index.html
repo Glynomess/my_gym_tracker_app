@@ -1458,14 +1458,12 @@
 
     // Комментарий внизу
     var comment = workout.comment || '';
-    html += '<div class="comment-section">';
-    html += '<div class="comment-label">Комментарий</div>';
     if (comment) {
+      html += '<div class="comment-section">';
+      html += '<div class="comment-label">Комментарий</div>';
       html += '<div class="comment-box" onclick="openCommentModal()">' + escapeHtml(comment) + '</div>';
-    } else {
-      html += '<div class="comment-box empty" onclick="openCommentModal()">Нажми, чтобы добавить комментарий...</div>';
+      html += '</div>';
     }
-    html += '</div>';
 
     area.innerHTML = html;
 
