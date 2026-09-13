@@ -1323,6 +1323,7 @@
 
     if (diffDays === 0) return 'Сегодня не было тренировок';
     if (diffDays === 1) return 'Тренировка была вчера';
+    if (diffDays < 0) return 'Тренировки в этот день не было';
     return 'Тренировок не было уже ' + diffDays + ' ' + pluralDays(diffDays);
   }
 
