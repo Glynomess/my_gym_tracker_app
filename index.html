@@ -1488,10 +1488,10 @@
     sel.setHours(0,0,0,0);
 
     if (sel > now) return 'Тренировка ещё не начата';
-    if (workoutHistory.length === 0) return 'Начни свою первую тренировку 💪';
+    if (workoutHistory.length === 0) return 'Начни свою первую тренировку';
 
     var lastWorkout = workoutHistory.find(function(w) { return w.sets && w.sets.length > 0; });
-    if (!lastWorkout) return 'Начни свою первую тренировку 💪';
+    if (!lastWorkout) return 'Начни свою первую тренировку';
 
     var lastDate = new Date(lastWorkout.date);
     lastDate.setHours(0,0,0,0);
