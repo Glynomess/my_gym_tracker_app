@@ -387,6 +387,38 @@
     color: var(--text);
   }
 
+  /* Комментарий под упражнениями */
+  .comment-section {
+    margin-top: 16px;
+  }
+  .comment-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 4px 8px;
+  }
+  .comment-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .comment-box:active { background: var(--bg-elevated); }
+  .comment-box.empty {
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
   .floating-bar {
     position: fixed;
     bottom: calc(24px + env(safe-area-inset-bottom));
@@ -460,6 +492,8 @@
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     max-width: 520px;
     margin: 0 auto;
+    max-height: 85vh;
+    overflow-y: auto;
   }
   .sheet.show { transform: translateY(0); }
 
@@ -563,7 +597,8 @@
     margin: 12px 4px 6px;
   }
 
-  .modal input {
+  .modal input,
+  .modal textarea {
     width: 100%;
     padding: 14px 16px;
     border-radius: var(--radius-sm);
@@ -575,8 +610,11 @@
     outline: none;
     font-family: inherit;
     transition: border-color 0.15s;
+    resize: vertical;
   }
-  .modal input:focus { border-color: var(--text); }
+  .modal input:focus,
+  .modal textarea:focus { border-color: var(--text); }
+  .modal textarea { min-height: 100px; line-height: 1.4; }
 
   .search-wrap {
     position: relative;
@@ -627,6 +665,88 @@
   .ex-picker-item .ex-picker-muscle {
     font-size: 12px;
     color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  /* Программы */
+  .program-swipe-wrap {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+  }
+  .program-swipe-content {
+    position: relative;
+    z-index: 2;
+    background: var(--bg-card);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+    border-radius: var(--radius-sm);
+  }
+  .program-swipe-content.dragging { transition: none; }
+  .program-swipe-delete {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 80px;
+    background: var(--danger);
+    color: #fff;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 1;
+    font-family: inherit;
+    border-radius: var(--radius-sm);
+  }
+  .program-swipe-delete svg { width: 20px; height: 20px; }
+
+  .program-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .program-item:active { background: var(--bg-elevated); }
+  .program-item .program-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .program-item .program-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .program-item .program-name {
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .program-item .program-count {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .program-item .program-arrow {
+    color: var(--text-muted);
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .empty-list {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
     font-weight: 500;
   }
 
@@ -870,18 +990,26 @@
 <div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
 <div class="sheet" id="sheet">
   <div class="sheet-handle"></div>
-  <button class="sheet-item" onclick="sheetAction('repeat')">
+  <button class="sheet-item" onclick="sheetAction('loadProgram')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="23 4 23 10 17 10"/>
-      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/>
+      <line x1="12" y1="15" x2="12" y2="3"/>
     </svg>
-    Повторить сегодня
+    Загрузить программу
   </button>
   <button class="sheet-item" onclick="sheetAction('template')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
     </svg>
     Сохранить как программу
+  </button>
+  <button class="sheet-item" onclick="sheetAction('repeat')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="23 4 23 10 17 10"/>
+      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+    </svg>
+    Повторить сегодня
   </button>
   <button class="sheet-item" onclick="sheetAction('share')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -959,6 +1087,39 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="programsBackdrop">
+  <div class="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeProgramsPicker()" aria-label="Закрыть">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+    <h3>Загрузить программу</h3>
+    <div id="programsList"></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="commentBackdrop">
+  <div class="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeCommentModal()" aria-label="Закрыть">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+    <h3>Комментарий</h3>
+
+    <div class="modal-label">Заметка к тренировке</div>
+    <textarea id="commentText" placeholder="Как прошло? Что запомнилось?"></textarea>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeCommentModal()">Отмена</button>
+      <button class="btn-primary" onclick="saveComment()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function() {
   var tg = window.Telegram ? window.Telegram.WebApp : null;
@@ -1032,6 +1193,12 @@
     if (Array.isArray(storedHistory)) workoutHistory = storedHistory;
   } catch (e) {}
 
+  var programs = [];
+  try {
+    var storedPrograms = JSON.parse(localStorage.getItem('programs') || '[]');
+    if (Array.isArray(storedPrograms)) programs = storedPrograms;
+  } catch (e) {}
+
   var settings = JSON.parse(localStorage.getItem('settings') || 'null');
   if (typeof settings !== 'object' || settings === null || !settings.theme) {
     settings = { theme: 'dark', unit: 'kg' };
@@ -1064,6 +1231,7 @@
   function save() {
     localStorage.setItem('exercises', JSON.stringify(exercises));
     localStorage.setItem('history', JSON.stringify(workoutHistory));
+    localStorage.setItem('programs', JSON.stringify(programs));
     localStorage.setItem('settings', JSON.stringify(settings));
   }
 
@@ -1076,7 +1244,6 @@
     return getMuscle(name) === 'cardio';
   }
 
-  // Рекорд: максимальный вес за всё время (кроме текущей тренировки)
   function getMaxWeight(exercise, excludeDate) {
     var max = 0;
     for (var i = 0; i < workoutHistory.length; i++) {
@@ -1093,7 +1260,6 @@
     return max;
   }
 
-  // Рекомендация повышения: если все подходы последней тренировки >= 12 повторений
   function getRecommendation(exercise, excludeDate) {
     if (isCardio(exercise)) return null;
 
@@ -1222,10 +1388,8 @@
       var safeName = exName.replace(/"/g, '&quot;').replace(/'/g, "\\'");
       var dataAttr = exName.replace(/"/g, '&quot;');
 
-      // Рекомендация (только для не-кардио)
       var rec = !isCardioEx ? getRecommendation(exName, selectedDate) : null;
 
-      // Рекорд в этой тренировке (для не-кардио)
       var maxPrev = !isCardioEx ? getMaxWeight(exName, selectedDate) : 0;
       var isRecord = false;
       if (!isCardioEx && maxPrev > 0) {
@@ -1252,12 +1416,11 @@
       html += '</div>';
       html += '<div class="exercise-body"><div class="exercise-body-inner">';
 
-      // Баннеры: рекорд и рекомендация
       if (isRecord) {
         html += '<div class="rec-banner record"><span class="rec-icon">🏆</span><span>Рекорд! Новый максимум по весу</span></div>';
       }
       if (rec) {
-        html += '<div class="rec-banner suggest"><span class="rec-icon">💡</span><span>Новый рекомендованный вес — попробуй ' + rec.suggested + ' кг. Прошлый раз: ' + rec.lastWeight + ' кг × ' + rec.setsCount + '</span></div>';
+        html += '<div class="rec-banner suggest"><span class="rec-icon">💡</span><span>Пора повысить вес — попробуй ' + rec.suggested + ' кг. Прошлый раз: ' + rec.lastWeight + ' кг × ' + rec.setsCount + '</span></div>';
       }
 
       sets.forEach(function(s, n) {
@@ -1293,6 +1456,17 @@
       html += '</div>';
     });
 
+    // Комментарий внизу
+    var comment = workout.comment || '';
+    html += '<div class="comment-section">';
+    html += '<div class="comment-label">Комментарий</div>';
+    if (comment) {
+      html += '<div class="comment-box" onclick="openCommentModal()">' + escapeHtml(comment) + '</div>';
+    } else {
+      html += '<div class="comment-box empty" onclick="openCommentModal()">Нажми, чтобы добавить комментарий...</div>';
+    }
+    html += '</div>';
+
     area.innerHTML = html;
 
     document.querySelectorAll('.exercise-item').forEach(function(el) {
@@ -1304,6 +1478,10 @@
 
     attachSwipeHandlers();
   };
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
 
   function getEmptyText() {
     var now = new Date();
@@ -1534,7 +1712,7 @@
     var filtered = exercises.filter(function(e) { return e.name.toLowerCase().indexOf(lower) !== -1; });
 
     if (filtered.length === 0) {
-      list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);font-size:14px;">Ничего не найдено</div>';
+      list.innerHTML = '<div class="empty-list">Ничего не найдено</div>';
       return;
     }
 
@@ -1583,6 +1761,204 @@
     save();
   }
 
+  // ===== ПРОГРАММЫ =====
+  window.openProgramsPicker = function() {
+    renderProgramsList();
+    document.getElementById('programsBackdrop').classList.add('show');
+  };
+
+  window.closeProgramsPicker = function() {
+    document.getElementById('programsBackdrop').classList.remove('show');
+  };
+
+  function renderProgramsList() {
+    var list = document.getElementById('programsList');
+    if (!list) return;
+
+    if (programs.length === 0) {
+      list.innerHTML = '<div class="empty-list">Нет сохранённых программ<br><br>Создай программу через меню «⋯»</div>';
+      return;
+    }
+
+    list.innerHTML = programs.map(function(p, idx) {
+      return '<div class="program-swipe-wrap" data-program-idx="' + idx + '">' +
+        '<button class="program-swipe-delete" onclick="deleteProgram(' + idx + ')">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+          '<polyline points="3 6 5 6 21 6"/>' +
+          '<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>' +
+          '</svg>Удалить</button>' +
+        '<div class="program-swipe-content">' +
+          '<div class="program-item" onclick="loadProgram(' + idx + ')">' +
+            '<div class="program-icon">📋</div>' +
+            '<div class="program-info">' +
+              '<div class="program-name">' + escapeHtml(p.name) + '</div>' +
+              '<div class="program-count">' + p.exercises.length + ' упр.</div>' +
+            '</div>' +
+            '<div class="program-arrow">›</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    attachProgramSwipeHandlers();
+  }
+
+  function attachProgramSwipeHandlers() {
+    var openProgramSwipe = null;
+    document.querySelectorAll('.program-swipe-wrap').forEach(function(wrap) {
+      var content = wrap.querySelector('.program-swipe-content');
+      if (!content) return;
+      var startX = 0, startY = 0, currentX = 0;
+      var isDragging = false, isHorizontal = null;
+      var maxSwipe = 80;
+
+      content.addEventListener('touchstart', function(e) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        currentX = 0;
+        isDragging = false;
+        isHorizontal = null;
+        content.classList.add('dragging');
+      }, { passive: true });
+
+      content.addEventListener('touchmove', function(e) {
+        var dx = e.touches[0].clientX - startX;
+        var dy = e.touches[0].clientY - startY;
+
+        if (isHorizontal === null) {
+          if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+            isHorizontal = Math.abs(dx) > Math.abs(dy);
+          } else return;
+        }
+        if (!isHorizontal) return;
+
+        isDragging = true;
+        if (openProgramSwipe && openProgramSwipe !== content) {
+          openProgramSwipe.style.transform = 'translateX(0)';
+          openProgramSwipe = null;
+        }
+
+        var offset = Math.min(0, Math.max(-maxSwipe, dx));
+        content.style.transform = 'translateX(' + offset + 'px)';
+        currentX = offset;
+      }, { passive: true });
+
+      content.addEventListener('touchend', function() {
+        content.classList.remove('dragging');
+        if (!isDragging) return;
+        if (currentX < -maxSwipe / 2) {
+          content.style.transform = 'translateX(-' + maxSwipe + 'px)';
+          openProgramSwipe = content;
+        } else {
+          content.style.transform = 'translateX(0)';
+          if (openProgramSwipe === content) openProgramSwipe = null;
+        }
+        isDragging = false;
+      });
+
+      content.addEventListener('click', function(e) {
+        if (openProgramSwipe === content) {
+          e.stopPropagation();
+          e.preventDefault();
+          content.style.transform = 'translateX(0)';
+          openProgramSwipe = null;
+        }
+      }, true);
+    });
+  }
+
+  window.loadProgram = function(idx) {
+    var p = programs[idx];
+    if (!p) return;
+
+    var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
+    if (!workout) {
+      workout = { date: selectedDate.toISOString(), sets: [], _open: {} };
+      workoutHistory.unshift(workout);
+      workoutHistory.sort(function(a,b) { return new Date(b.date) - new Date(a.date); });
+    }
+    if (!workout._open) workout._open = {};
+    if (!workout.sets) workout.sets = [];
+
+    var added = 0;
+    var skipped = 0;
+
+    p.exercises.forEach(function(ex) {
+      var exists = workout.sets.some(function(s) { return s.exercise === ex.name; });
+      if (exists) {
+        skipped++;
+        return;
+      }
+      // Убедимся что упражнение есть в общем списке
+      var exExists = exercises.some(function(e) { return e.name === ex.name; });
+      if (!exExists) {
+        exercises.push({ name: ex.name, muscle: ex.muscle || 'back' });
+      }
+      workout.sets.push({
+        exercise: ex.name,
+        weight: ex.weight || 0,
+        reps: ex.reps || 0,
+        time: Date.now()
+      });
+      workout._open[ex.name] = true;
+      added++;
+    });
+
+    save();
+    window.closeProgramsPicker();
+    window.render();
+
+    if (tg) {
+      var msg = 'Добавлено упражнений: ' + added;
+      if (skipped > 0) msg += '\nПропущено (уже есть): ' + skipped;
+      tg.showAlert(msg);
+      tg.HapticFeedback.notificationOccurred('success');
+    } else {
+      var msg2 = 'Добавлено: ' + added;
+      if (skipped > 0) msg2 += ', пропущено: ' + skipped;
+      alert(msg2);
+    }
+  };
+
+  window.deleteProgram = function(idx) {
+    if (!programs[idx]) return;
+    if (!confirm('Удалить программу «' + programs[idx].name + '»?')) return;
+    programs.splice(idx, 1);
+    save();
+    renderProgramsList();
+    if (tg) tg.HapticFeedback.notificationOccurred('success');
+  };
+
+  // ===== КОММЕНТАРИЙ =====
+  window.openCommentModal = function() {
+    var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
+    if (!workout) return;
+    var textarea = document.getElementById('commentText');
+    if (textarea) textarea.value = workout.comment || '';
+    document.getElementById('commentBackdrop').classList.add('show');
+    setTimeout(function() { if (textarea) textarea.focus(); }, 250);
+  };
+
+  window.closeCommentModal = function() {
+    document.getElementById('commentBackdrop').classList.remove('show');
+  };
+
+  window.saveComment = function() {
+    var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
+    if (!workout) return;
+    var val = document.getElementById('commentText').value.trim();
+    if (val) {
+      workout.comment = val;
+    } else {
+      delete workout.comment;
+    }
+    save();
+    window.closeCommentModal();
+    window.render();
+    if (tg) tg.HapticFeedback.notificationOccurred('success');
+  };
+
+  // ===== СОЗДАНИЕ УПРАЖНЕНИЯ =====
   window.openCreateExercise = function() {
     window.closeExercisePicker();
     var grid = document.getElementById('muscleGrid');
@@ -1625,6 +2001,7 @@
     if (tg) tg.HapticFeedback.notificationOccurred('success');
   };
 
+  // ===== ШТОРКА =====
   window.openSheet = function() {
     document.getElementById('sheetBackdrop').classList.add('show');
     document.getElementById('sheet').classList.add('show');
@@ -1637,7 +2014,9 @@
     window.closeSheet();
     var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
 
-    if (action === 'repeat') {
+    if (action === 'loadProgram') {
+      window.openProgramsPicker();
+    } else if (action === 'repeat') {
       if (!workout || !workout.sets || workout.sets.length === 0) return alert('Нет тренировки для повтора');
       var today = new Date();
       today.setHours(12,0,0,0);
@@ -1682,28 +2061,35 @@
         });
         msg += '\n';
       });
+      if (workout.comment) msg += '💬 ' + workout.comment + '\n';
       if (navigator.share) navigator.share({ text: msg }).catch(function(){});
       else if (tg) tg.showAlert(msg);
       else alert(msg);
     } else if (action === 'comment') {
       if (!workout) return;
-      var c = prompt('Комментарий к тренировке:', workout.comment || '');
-      if (c !== null) {
-        workout.comment = c;
-        save();
-      }
+      window.openCommentModal();
     } else if (action === 'template') {
-      if (!workout || !workout.sets || workout.sets.length === 0) return;
+      if (!workout || !workout.sets || workout.sets.length === 0) return alert('Нет упражнений для сохранения');
       var name = prompt('Название программы:', 'Тренировка');
       if (!name) return;
-      var templates = JSON.parse(localStorage.getItem('templates') || '[]');
-      var uniqueEx = [];
+      // Уникальные упражнения + веса с последних подходов
+      var seen = {};
+      var exList = [];
       workout.sets.forEach(function(s) {
-        if (uniqueEx.indexOf(s.exercise) === -1) uniqueEx.push(s.exercise);
+        if (!seen[s.exercise]) {
+          seen[s.exercise] = true;
+          exList.push({
+            name: s.exercise,
+            muscle: getMuscle(s.exercise),
+            weight: s.weight,
+            reps: s.reps
+          });
+        }
       });
-      templates.push({ name: name, exercises: uniqueEx });
-      localStorage.setItem('templates', JSON.stringify(templates));
+      programs.push({ name: name, exercises: exList });
+      save();
       if (tg) tg.showAlert('Программа сохранена: ' + name);
+      else alert('Программа сохранена: ' + name);
     }
   };
 
