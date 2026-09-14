@@ -401,7 +401,7 @@
   }
   .comment-box {
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: none;
     border-radius: var(--radius);
     padding: 16px;
     font-size: 15px;
@@ -1602,6 +1602,16 @@
     if (!confirm('Удалить «' + exName + '» из тренировки?')) return;
     var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
     if (!workout) return;
+  window.deleteComment = function() {
+    closeAllSwipes();
+    var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
+    if (!workout) return;
+    if (!confirm('Удалить комментарий?')) return;
+    delete workout.comment;
+    save();
+    window.render();
+    if (tg) tg.HapticFeedback.notificationOccurred('success');
+  };
 
     workout.sets = workout.sets.filter(function(s) { return s.exercise !== exName; });
     if (workout._open) delete workout._open[exName];
