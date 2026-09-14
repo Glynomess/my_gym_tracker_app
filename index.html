@@ -1602,23 +1602,24 @@
     if (!confirm('Удалить «' + exName + '» из тренировки?')) return;
     var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
     if (!workout) return;
-  window.deleteComment = function() {
-    closeAllSwipes();
-    var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
-    if (!workout) return;
-    if (!confirm('Удалить комментарий?')) return;
-    delete workout.comment;
-    save();
-    window.render();
-    if (tg) tg.HapticFeedback.notificationOccurred('success');
-  }
-
+  
     workout.sets = workout.sets.filter(function(s) { return s.exercise !== exName; });
     if (workout._open) delete workout._open[exName];
 
     if (workout.sets.length === 0) {
       workoutHistory = workoutHistory.filter(function(w) { return w !== workout; });
     }
+    save();
+    window.render();
+    if (tg) tg.HapticFeedback.notificationOccurred('success');
+  };
+  
+  window.deleteComment = function() {
+    closeAllSwipes();
+    var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
+    if (!workout) return;
+    if (!confirm('Удалить комментарий?')) return;
+    delete workout.comment;
     save();
     window.render();
     if (tg) tg.HapticFeedback.notificationOccurred('success');
