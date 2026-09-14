@@ -1126,9 +1126,8 @@
   if (tg) {
     tg.ready();
     tg.expand();
-    // Полноэкранный режим (если поддерживается)
+    // Запрещаем случайное сворачивание свайпом вниз
     try {
-      if (tg.requestFullscreen) tg.requestFullscreen();
       if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
     } catch (e) {}
   }
