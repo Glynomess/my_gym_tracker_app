@@ -219,9 +219,23 @@
     transform: rotate(180deg);
   }
 
-  .calendar.hidden,
-  .cal-expand-row.hidden {
+  .cal-days.week-hidden .cal-day {
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 0.25s, transform 0.25s;
+  }
+  .cal-days.month-mode .cal-day {
     display: none;
+  }
+  .cal-month-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    transition: opacity 0.25s;
   }
 
   .month-grid {
@@ -2198,12 +2212,10 @@
     monthViewOpen = false;
     var btn = document.getElementById('calExpandBtn');
     var grid = document.getElementById('monthGrid');
-    var cal = document.querySelector('.calendar');
-    var expandRow = document.querySelector('.cal-expand-row');
+    var calDays = document.getElementById('calDays');
     if (btn) btn.classList.remove('open');
     if (grid) grid.classList.remove('open');
-    if (cal) cal.classList.remove('hidden');
-    if (expandRow) expandRow.classList.remove('hidden');
+    if (calDays) calDays.classList.remove('month-mode');
     window.render();
     if (tg) tg.HapticFeedback.selectionChanged();
   };
@@ -2212,20 +2224,25 @@
     monthViewOpen = !monthViewOpen;
     var btn = document.getElementById('calExpandBtn');
     var grid = document.getElementById('monthGrid');
-    var cal = document.querySelector('.calendar');
-    var expandRow = document.querySelector('.cal-expand-row');
+    var calDays = document.getElementById('calDays');
 
     if (monthViewOpen) {
       monthViewDate = new Date(weekStart.getFullYear(), weekStart.getMonth(), 1);
       if (btn) btn.classList.add('open');
       if (grid) grid.classList.add('open');
-      if (cal) cal.classList.add('hidden');
-      if (expandRow) expandRow.classList.add('hidden');
+
+      // Скрываем дни недели, показываем название месяца
+      if (calDays) {
+        calDays.classList.add('month-mode');
+        var monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+        calDays.innerHTML = '<div class="cal-month-label">' + monthNames[monthViewDate.getMonth()] + ' ' + monthViewDate.getFullYear() + '</div>';
+      }
     } else {
       if (btn) btn.classList.remove('open');
       if (grid) grid.classList.remove('open');
-      if (cal) cal.classList.remove('hidden');
-      if (expandRow) expandRow.classList.remove('hidden');
+      if (calDays) calDays.classList.remove('month-mode');
+      // Возвращаем дни недели
+      window.renderCalendar();
     }
     window.renderMonthTitle();
     window.renderMonthGrid();
@@ -2410,8 +2427,16 @@
     if (monthViewOpen) {
       monthViewDate.setMonth(monthViewDate.getMonth() + dir);
       var m = monthViewDate.getMonth();
-      weekStart = new Date(monthViewDate.getFullYear(), m, 1);
-      weekStart = getMonday(weekStart);
+      var y = monthViewDate.getFullYear();
+      weekStart = getMonday(new Date(y, m, 1));
+
+      // Обновляем название месяца в центре
+      var calDays = document.getElementById('calDays');
+      var monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+      if (calDays) {
+        calDays.innerHTML = '<div class="cal-month-label">' + monthNames[m] + ' ' + y + '</div>';
+      }
+
       window.renderMonthTitle();
       window.renderMonthGrid();
       renderStreak();
