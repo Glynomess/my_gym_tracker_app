@@ -2163,17 +2163,20 @@
       });
     });
 
-    var maxVolume = 0;
-    var maxWeight = 0;
+    // === МЕТРИКИ — ВСЕГДА ПО ДНЯМ ===
+    var byDayAll = {};
     allSets.forEach(function(s) {
-      if (s.weight > maxWeight) maxWeight = s.weight;
+      var key = dateKey(s.date);
+      if (!byDayAll[key]) byDayAll[key] = { volume: 0, maxWeight: 0 };
+      byDayAll[key].volume += s.volume;
+      if (s.weight > byDayAll[key].maxWeight) byDayAll[key].maxWeight = s.weight;
     });
 
-    // Группировка по периодам
-    var points = groupByPeriod(allSets, statsPeriod);
-
-    points.forEach(function(p) {
-      if (p.volume > maxVolume) maxVolume = p.volume;
+    var maxVolume = 0;
+    var maxWeight = 0;
+    Object.keys(byDayAll).forEach(function(k) {
+      if (byDayAll[k].volume > maxVolume) maxVolume = byDayAll[k].volume;
+      if (byDayAll[k].maxWeight > maxWeight) maxWeight = byDayAll[k].maxWeight;
     });
 
     var volEl = document.getElementById('metricVolume');
@@ -2185,6 +2188,14 @@
 
     var chartArea = document.getElementById('statsChartArea');
     if (!chartArea) return;
+
+    // === ГРАФИК — группировка по периоду ===
+    var points = groupByPeriod(allSets, statsPeriod);
+
+    // Fallback: если точек < 3 — группируем по дням
+    if (points.length < 3) {
+      points = groupByPeriod(allSets, 'day');
+    }
 
     if (points.length < 3) {
       chartArea.innerHTML = '<div class="no-data">Пока мало данных для графика<br><br>Нужно минимум 3 дня с тренировками</div>';
@@ -2200,7 +2211,7 @@
       animateChartLines();
     }, 30);
   }
-
+  
   function animateNumber(el, target, duration) {
     if (!el) return;
     var start = 0;
@@ -2219,28 +2230,30 @@
 
   function groupByPeriod(sets, period) {
     var buckets = {};
+    var monthsShort = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
 
     sets.forEach(function(s) {
       var key, label;
       var d = new Date(s.date);
 
-      if (period === 'week' || period === 'month') {
+      if (period === 'day' || period === 'week' || period === 'month') {
+        // По дням
         key = dateKey(d);
-        label = d.getDate() + ' ' + ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'][d.getMonth()];
+        label = d.getDate() + ' ' + monthsShort[d.getMonth()];
       } else if (period === '3months' || period === '6months') {
         // По неделям
         var monday = getMonday(d);
         key = dateKey(monday);
-        label = monday.getDate() + ' ' + ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'][monday.getMonth()];
+        label = monday.getDate() + ' ' + monthsShort[monday.getMonth()];
       } else if (period === 'year') {
         // По месяцам
         key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-        label = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'][d.getMonth()];
+        label = monthsShort[d.getMonth()];
       } else {
         // all — по неделям
         var monday2 = getMonday(d);
         key = dateKey(monday2);
-        label = monday2.getDate() + ' ' + ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'][monday2.getMonth()];
+        label = monday2.getDate() + ' ' + monthsShort[monday2.getMonth()];
       }
 
       if (!buckets[key]) {
