@@ -1824,6 +1824,12 @@
 
   function getRecommendation(exercise, excludeDate) {
     if (isCardio(exercise)) return null;
+    // Рекомендация только для сегодняшней даты
+    var today = new Date();
+    today.setHours(0,0,0,0);
+    var sel = new Date(selectedDate);
+    sel.setHours(0,0,0,0);
+    if (sel.getTime() !== today.getTime()) return null;
 
     var lastWorkout = null;
     for (var i = 0; i < workoutHistory.length; i++) {
