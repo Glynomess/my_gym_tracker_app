@@ -1220,7 +1220,6 @@
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
-    transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .chart-line.volume {
@@ -2368,16 +2367,37 @@
   }
 
   function animateChartLines() {
-    ['lineVolume', 'lineWeight'].forEach(function(id, idx) {
-      var path = document.getElementById(id);
+    var paths = [
+      { id: 'lineVolume', delay: 0 },
+      { id: 'lineWeight', delay: 150 }
+    ];
+
+    paths.forEach(function(item) {
+      var path = document.getElementById(item.id);
       if (!path) return;
-      var len = path.getTotalLength();
-      path.style.strokeDasharray = len;
+
+      // Считаем длину
+      var len = 0;
+      try {
+        len = path.getTotalLength();
+      } catch (e) {
+        len = 1000;
+      }
+      if (!len || len < 1) len = 1000;
+
+      // Начальное состояние
+      path.style.transition = 'none';
+      path.style.strokeDasharray = len + ' ' + len;
       path.style.strokeDashoffset = len;
-      // Триггерим transition
-      requestAnimationFrame(function() {
+
+      // Форсируем reflow
+      path.getBoundingClientRect();
+
+      // Запускаем анимацию с задержкой
+      setTimeout(function() {
+        path.style.transition = 'stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
         path.style.strokeDashoffset = 0;
-      });
+      }, item.delay + 50);
     });
 
     // Тап на точки
