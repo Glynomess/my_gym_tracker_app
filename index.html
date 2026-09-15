@@ -75,9 +75,19 @@
     display: flex;
     align-items: center;
     gap: 4px;
+  }
+  .streak-fire {
     font-size: 18px;
+    line-height: 1;
+  }
+  .streak-num {
+    background: var(--bg-elevated);
+    color: var(--text);
+    font-size: 13px;
     font-weight: 700;
-    color: var(--gold);
+    padding: 3px 9px;
+    border-radius: 20px;
+    line-height: 1.2;
   }
 
   .header-actions { display: flex; gap: 8px; }
@@ -1489,7 +1499,7 @@
     var s = getStreak();
     if (s >= 2) {
       el.style.display = 'flex';
-      el.innerHTML = '🔥 ' + s;
+      el.innerHTML = '<span class="streak-fire">🔥</span><span class="streak-num">' + s + '</span>';
     } else {
       el.style.display = 'none';
     }
