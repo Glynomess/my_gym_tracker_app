@@ -60,11 +60,26 @@
     align-items: center;
     padding: 4px 0 20px;
   }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
   .header h1 {
     font-size: 30px;
     font-weight: 700;
     letter-spacing: -0.8px;
   }
+
+  .streak {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
   .header-actions { display: flex; gap: 8px; }
   .icon-btn {
     width: 44px;
@@ -87,7 +102,7 @@
     background: var(--bg-card);
     border-radius: var(--radius);
     padding: 14px 8px;
-    margin-bottom: 20px;
+    margin-bottom: 0;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -165,6 +180,88 @@
   .cal-day.selected:not(.today) .cal-day-num {
     background: var(--bg-elevated);
   }
+
+  /* Стрелка раскрытия календаря */
+  .cal-expand-row {
+    display: flex;
+    justify-content: center;
+    padding: 4px 0 20px;
+  }
+  .cal-expand-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    width: 40px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s;
+  }
+  .cal-expand-btn:active { color: var(--text); }
+  .cal-expand-btn svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .cal-expand-btn.open svg {
+    transform: rotate(180deg);
+  }
+
+  /* Полный месяц */
+  .month-grid {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .month-grid.open {
+    max-height: 500px;
+  }
+  .month-grid-inner {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 14px 8px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+
+  .month-day-name {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    text-align: center;
+    padding-bottom: 6px;
+  }
+
+  .month-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 50%;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .month-day:active { background: var(--bg-elevated); }
+  .month-day.empty { cursor: default; opacity: 0.3; }
+  .month-day.empty:active { background: transparent; }
+  .month-day.today {
+    background: var(--accent);
+    color: var(--accent-text);
+  }
+  .month-day.has-workout { border-color: var(--text); }
+  .month-day.today.has-workout { border-color: var(--accent); }
+  .month-day.selected:not(.today) { background: var(--bg-elevated); }
 
   .empty-state {
     text-align: center;
@@ -387,10 +484,7 @@
     color: var(--text);
   }
 
-  /* Комментарий под упражнениями */
-  .comment-section {
-    margin-top: 16px;
-  }
+  .comment-section { margin-top: 16px; }
   .comment-label {
     font-size: 12px;
     font-weight: 600;
@@ -414,10 +508,6 @@
     word-break: break-word;
   }
   .comment-box:active { background: var(--bg-elevated); }
-  .comment-box.empty {
-    color: var(--text-muted);
-    font-weight: 400;
-  }
 
   .floating-bar {
     position: fixed;
@@ -616,13 +706,19 @@
   .modal textarea:focus { border-color: var(--text); }
   .modal textarea { min-height: 100px; line-height: 1.4; }
 
+  .modal-text {
+    font-size: 15px;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.4;
+    margin-bottom: 16px;
+  }
+
   .search-wrap {
     position: relative;
     margin-bottom: 8px;
   }
-  .search-wrap input {
-    padding-left: 44px;
-  }
+  .search-wrap input { padding-left: 44px; }
   .search-icon {
     position: absolute;
     left: 16px;
@@ -640,6 +736,15 @@
     margin: 0 -4px;
   }
 
+  .ex-group-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 12px 12px 6px;
+  }
+
   .ex-picker-item {
     display: flex;
     align-items: center;
@@ -648,6 +753,7 @@
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: background 0.15s;
+    user-select: none;
   }
   .ex-picker-item:active { background: var(--bg-card); }
   .ex-picker-item img {
@@ -668,7 +774,6 @@
     font-weight: 500;
   }
 
-  /* Программы */
   .program-swipe-wrap {
     position: relative;
     overflow: hidden;
@@ -840,6 +945,10 @@
     background: var(--accent);
     color: var(--accent-text);
   }
+  .btn-danger {
+    background: var(--danger);
+    color: #fff;
+  }
 
   .screen { display: none; }
   .screen.active { display: block; }
@@ -911,7 +1020,10 @@
 <div class="screen active" id="screenMain">
 
   <div class="header">
-    <h1 id="monthTitle">Месяц</h1>
+    <div class="header-left">
+      <h1 id="monthTitle">Месяц</h1>
+      <div class="streak" id="streakEl" style="display:none;"></div>
+    </div>
     <div class="header-actions">
       <button class="icon-btn" onclick="openSettings()" aria-label="Настройки">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -934,6 +1046,18 @@
         <polyline points="9 18 15 12 9 6"/>
       </svg>
     </button>
+  </div>
+
+  <div class="cal-expand-row">
+    <button class="cal-expand-btn" id="calExpandBtn" onclick="toggleMonthView()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="month-grid" id="monthGrid">
+    <div class="month-grid-inner" id="monthGridInner"></div>
   </div>
 
   <div id="contentArea"></div>
@@ -1120,13 +1244,23 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="deleteExerciseBackdrop">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>Удалить упражнение?</h3>
+    <div class="modal-text" id="deleteExerciseText"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeDeleteExercise()">Отмена</button>
+      <button class="btn-danger" onclick="confirmDeleteExercise()">Удалить</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function() {
   var tg = window.Telegram ? window.Telegram.WebApp : null;
   if (tg) {
     tg.ready();
     tg.expand();
-    // Запрещаем случайное сворачивание свайпом вниз
     try {
       if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
     } catch (e) {}
@@ -1151,6 +1285,8 @@
     shoulders: 'Плечи',
     cardio: 'Кардио'
   };
+
+  var MUSCLE_ORDER = ['back', 'chest', 'arms', 'abs', 'legs', 'shoulders', 'cardio'];
 
   var WEIGHT_STEP = {
     arms: 1.5,
@@ -1194,6 +1330,15 @@
   var exercises = JSON.parse(localStorage.getItem('exercises') || 'null');
   if (!Array.isArray(exercises) || exercises.length === 0) exercises = DEFAULT_EXERCISES.slice();
 
+  // Помечаем вшитые упражнения флагом custom: false (если ещё нет)
+  var defaultNames = {};
+  DEFAULT_EXERCISES.forEach(function(e) { defaultNames[e.name] = true; });
+  exercises.forEach(function(e) {
+    if (typeof e.custom === 'undefined') {
+      e.custom = !defaultNames[e.name];
+    }
+  });
+
   var workoutHistory = [];
   try {
     var storedHistory = JSON.parse(localStorage.getItem('history') || '[]');
@@ -1213,8 +1358,11 @@
 
   var selectedDate = new Date();
   var weekStart = getMonday(new Date());
+  var monthViewDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  var monthViewOpen = false;
   var pendingMuscle = 'back';
   var openSwipeEl = null;
+  var pendingDeleteExerciseName = null;
 
   function getMonday(d) {
     var date = new Date(d);
@@ -1299,6 +1447,54 @@
     };
   }
 
+  // ===== Стрик =====
+  function getStreak() {
+    if (workoutHistory.length === 0) return 0;
+
+    // Собираем уникальные даты тренировок (только с подходами)
+    var dates = {};
+    workoutHistory.forEach(function(w) {
+      if (w.sets && w.sets.length > 0) {
+        dates[dateKey(new Date(w.date))] = true;
+      }
+    });
+    var keys = Object.keys(dates);
+    if (keys.length === 0) return 0;
+
+    // Идём от самой свежей даты назад
+    var today = new Date();
+    today.setHours(0,0,0,0);
+
+    // Если сегодня тренировки нет — начинаем с вчера
+    var checkDate = new Date(today);
+    if (!dates[dateKey(checkDate)]) {
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+
+    var streak = 0;
+    while (true) {
+      if (dates[dateKey(checkDate)]) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
+
+  function renderStreak() {
+    var el = document.getElementById('streakEl');
+    if (!el) return;
+    var s = getStreak();
+    if (s >= 2) {
+      el.style.display = 'flex';
+      el.innerHTML = '🔥 ' + s;
+    } else {
+      el.style.display = 'none';
+    }
+  }
+
   window.applyTheme = function() {
     document.documentElement.setAttribute('data-theme', settings.theme);
     var el;
@@ -1326,13 +1522,18 @@
   window.render = function() {
     window.renderMonthTitle();
     window.renderCalendar();
+    window.renderMonthGrid();
     window.renderContent();
+    renderStreak();
   };
 
   window.renderMonthTitle = function() {
     var months = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
     var el = document.getElementById('monthTitle');
-    if (el) el.textContent = months[weekStart.getMonth()];
+    if (el) {
+      var d = monthViewOpen ? monthViewDate : weekStart;
+      el.textContent = months[d.getMonth()];
+    }
   };
 
   window.renderCalendar = function() {
@@ -1363,6 +1564,79 @@
         '</div>';
     }
     container.innerHTML = html;
+  };
+
+  window.renderMonthGrid = function() {
+    var container = document.getElementById('monthGridInner');
+    if (!container) return;
+
+    var dayNames = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+    var year = monthViewDate.getFullYear();
+    var month = monthViewDate.getMonth();
+    var firstDay = new Date(year, month, 1);
+    var lastDay = new Date(year, month + 1, 0);
+    var startOffset = (firstDay.getDay() + 6) % 7; // 0 = Пн, 6 = Вс
+    var daysInMonth = lastDay.getDate();
+    var today = new Date();
+
+    var html = '';
+    dayNames.forEach(function(n) {
+      html += '<div class="month-day-name">' + n + '</div>';
+    });
+
+    for (var i = 0; i < startOffset; i++) {
+      html += '<div class="month-day empty"></div>';
+    }
+
+    for (var d = 1; d <= daysInMonth; d++) {
+      var dateObj = new Date(year, month, d, 12, 0, 0);
+      var isToday = sameDay(dateObj, today);
+      var isSelected = sameDay(dateObj, selectedDate);
+      var hasWorkout = workoutHistory.some(function(w) {
+        return sameDay(new Date(w.date), dateObj) && w.sets && w.sets.length > 0;
+      });
+
+      var cls = 'month-day';
+      if (isToday) cls += ' today';
+      if (hasWorkout) cls += ' has-workout';
+      if (isSelected && !isToday) cls += ' selected';
+
+      html += '<div class="' + cls + '" onclick="selectDayFromMonth(\'' + dateKey(dateObj) + '\')">' + d + '</div>';
+    }
+
+    container.innerHTML = html;
+  };
+
+  window.selectDayFromMonth = function(key) {
+    var parts = key.split('-').map(Number);
+    selectedDate = new Date(parts[0], parts[1]-1, parts[2], 12, 0, 0);
+    // Закрываем шторку
+    monthViewOpen = false;
+    var btn = document.getElementById('calExpandBtn');
+    var grid = document.getElementById('monthGrid');
+    if (btn) btn.classList.remove('open');
+    if (grid) grid.classList.remove('open');
+    window.render();
+    if (tg) tg.HapticFeedback.selectionChanged();
+  };
+
+  window.toggleMonthView = function() {
+    monthViewOpen = !monthViewOpen;
+    var btn = document.getElementById('calExpandBtn');
+    var grid = document.getElementById('monthGrid');
+
+    if (monthViewOpen) {
+      // Синхронизируем месяц с текущей неделей
+      monthViewDate = new Date(weekStart.getFullYear(), weekStart.getMonth(), 1);
+      if (btn) btn.classList.add('open');
+      if (grid) grid.classList.add('open');
+    } else {
+      if (btn) btn.classList.remove('open');
+      if (grid) grid.classList.remove('open');
+    }
+    window.renderMonthTitle();
+    window.renderMonthGrid();
+    if (tg) tg.HapticFeedback.selectionChanged();
   };
 
   window.renderContent = function() {
@@ -1463,7 +1737,6 @@
       html += '</div>';
     });
 
-    // Комментарий внизу — только если есть
     var comment = workout.comment || '';
     if (comment) {
       html += '<div class="comment-section">';
@@ -1504,10 +1777,10 @@
     sel.setHours(0,0,0,0);
 
     if (sel > now) return 'Тренировка ещё не начата';
-    if (workoutHistory.length === 0) return 'Начни свою первую тренировку';
+    if (workoutHistory.length === 0) return 'Начни свою первую тренировку 💪';
 
     var lastWorkout = workoutHistory.find(function(w) { return w.sets && w.sets.length > 0; });
-    if (!lastWorkout) return 'Начни свою первую тренировку';
+    if (!lastWorkout) return 'Начни свою первую тренировку 💪';
 
     var lastDate = new Date(lastWorkout.date);
     lastDate.setHours(0,0,0,0);
@@ -1535,9 +1808,19 @@
   };
 
   window.shiftWeek = function(dir) {
-    weekStart.setDate(weekStart.getDate() + dir * 7);
-    closeAllSwipes();
-    window.render();
+    if (monthViewOpen) {
+      monthViewDate.setMonth(monthViewDate.getMonth() + dir);
+      var m = monthViewDate.getMonth();
+      weekStart = new Date(monthViewDate.getFullYear(), m, 1);
+      weekStart = getMonday(weekStart);
+      window.renderMonthTitle();
+      window.renderMonthGrid();
+      window.renderCalendar();
+    } else {
+      weekStart.setDate(weekStart.getDate() + dir * 7);
+      closeAllSwipes();
+      window.render();
+    }
     if (tg) tg.HapticFeedback.selectionChanged();
   };
 
@@ -1602,7 +1885,7 @@
     if (!confirm('Удалить «' + exName + '» из тренировки?')) return;
     var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
     if (!workout) return;
-  
+
     workout.sets = workout.sets.filter(function(s) { return s.exercise !== exName; });
     if (workout._open) delete workout._open[exName];
 
@@ -1613,7 +1896,7 @@
     window.render();
     if (tg) tg.HapticFeedback.notificationOccurred('success');
   };
-  
+
   window.deleteComment = function() {
     closeAllSwipes();
     var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
@@ -1729,6 +2012,25 @@
     document.getElementById('pickerBackdrop').classList.remove('show');
   };
 
+  // Сортировка: группируем по muscle, внутри группы по алфавиту
+  function sortExercises(list) {
+    var grouped = {};
+    list.forEach(function(e) {
+      if (!grouped[e.muscle]) grouped[e.muscle] = [];
+      grouped[e.muscle].push(e);
+    });
+    Object.keys(grouped).forEach(function(k) {
+      grouped[k].sort(function(a, b) { return a.name.localeCompare(b.name, 'ru'); });
+    });
+    var sorted = [];
+    MUSCLE_ORDER.forEach(function(m) {
+      if (grouped[m]) {
+        sorted = sorted.concat(grouped[m]);
+      }
+    });
+    return sorted;
+  }
+
   function renderExercisePicker(filter) {
     filter = filter || '';
     var list = document.getElementById('exPickerList');
@@ -1741,14 +2043,68 @@
       return;
     }
 
-    list.innerHTML = filtered.map(function(ex) {
-      var safe = ex.name.replace(/'/g, "\\'");
-      return '<div class="ex-picker-item" onclick="pickExercise(\'' + safe + '\')">' +
-        '<img src="' + (ICONS[ex.muscle] || ICONS.back) + '" alt="" onerror="this.style.opacity=\'0.2\'">' +
-        '<div class="ex-picker-name">' + ex.name + '</div>' +
-        '<div class="ex-picker-muscle">' + (MUSCLE_LABELS[ex.muscle] || '') + '</div>' +
-        '</div>';
-    }).join('');
+    var sorted = sortExercises(filtered);
+
+    // Если поиск — показываем без заголовков групп
+    var html = '';
+    if (filter) {
+      html = sorted.map(function(ex) {
+        return renderPickerItem(ex);
+      }).join('');
+    } else {
+      // Группируем для отображения с заголовками
+      var byMuscle = {};
+      sorted.forEach(function(ex) {
+        if (!byMuscle[ex.muscle]) byMuscle[ex.muscle] = [];
+        byMuscle[ex.muscle].push(ex);
+      });
+      MUSCLE_ORDER.forEach(function(m) {
+        if (byMuscle[m] && byMuscle[m].length > 0) {
+          html += '<div class="ex-group-label">' + MUSCLE_LABELS[m] + '</div>';
+          html += byMuscle[m].map(function(ex) {
+            return renderPickerItem(ex);
+          }).join('');
+        }
+      });
+    }
+
+    list.innerHTML = html;
+
+    // Долгий тап
+    list.querySelectorAll('.ex-picker-item').forEach(function(el) {
+      var name = el.dataset.exName;
+      var timer = null;
+
+      function startLongPress(e) {
+        timer = setTimeout(function() {
+          timer = null;
+          if (tg) tg.HapticFeedback.impactOccurred('medium');
+          openDeleteExercise(name);
+        }, 500);
+      }
+      function cancelLongPress() {
+        if (timer) { clearTimeout(timer); timer = null; }
+      }
+
+      el.addEventListener('touchstart', startLongPress, { passive: true });
+      el.addEventListener('touchend', cancelLongPress);
+      el.addEventListener('touchmove', cancelLongPress);
+      el.addEventListener('touchcancel', cancelLongPress);
+      el.addEventListener('mousedown', startLongPress);
+      el.addEventListener('mouseup', cancelLongPress);
+      el.addEventListener('mouseleave', cancelLongPress);
+      el.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    });
+  }
+
+  function renderPickerItem(ex) {
+    var safe = ex.name.replace(/'/g, "\\'");
+    var safeAttr = ex.name.replace(/"/g, '&quot;');
+    return '<div class="ex-picker-item" data-ex-name="' + safeAttr + '" onclick="pickExercise(\'' + safe + '\')">' +
+      '<img src="' + (ICONS[ex.muscle] || ICONS.back) + '" alt="" onerror="this.style.opacity=\'0.2\'">' +
+      '<div class="ex-picker-name">' + ex.name + '</div>' +
+      '<div class="ex-picker-muscle">' + (MUSCLE_LABELS[ex.muscle] || '') + '</div>' +
+      '</div>';
   }
 
   window.filterExercises = function() {
@@ -1756,10 +2112,53 @@
   };
 
   window.pickExercise = function(name) {
+    // Проверяем, не был ли это долгий тап — если да, не добавляем
+    if (longPressHandled) {
+      longPressHandled = false;
+      return;
+    }
     addExerciseToDay(name);
     window.closeExercisePicker();
     window.render();
     if (tg) tg.HapticFeedback.impactOccurred('light');
+  };
+
+  // Флаг чтобы не добавлять упражнение после долгого тапа
+  var longPressHandled = false;
+
+  window.openDeleteExercise = function(name) {
+    var ex = exercises.find(function(e) { return e.name === name; });
+    if (!ex) return;
+    if (!ex.custom) {
+      // Вшитое — нельзя удалить
+      if (tg) tg.HapticFeedback.notificationOccurred('warning');
+      return;
+    }
+    pendingDeleteExerciseName = name;
+    var text = document.getElementById('deleteExerciseText');
+    if (text) {
+      text.innerHTML = '«' + escapeHtml(name) + '» пропадёт из списка упражнений.<br>В прошлых тренировках оно останется.';
+    }
+    document.getElementById('deleteExerciseBackdrop').classList.add('show');
+    longPressHandled = true;
+  };
+
+  window.closeDeleteExercise = function() {
+    document.getElementById('deleteExerciseBackdrop').classList.remove('show');
+    pendingDeleteExerciseName = null;
+    longPressHandled = false;
+  };
+
+  window.confirmDeleteExercise = function() {
+    if (!pendingDeleteExerciseName) return;
+    var name = pendingDeleteExerciseName;
+    exercises = exercises.filter(function(e) { return e.name !== name; });
+    save();
+    pendingDeleteExerciseName = null;
+    document.getElementById('deleteExerciseBackdrop').classList.remove('show');
+    longPressHandled = false;
+    renderExercisePicker(document.getElementById('exSearch') ? document.getElementById('exSearch').value : '');
+    if (tg) tg.HapticFeedback.notificationOccurred('success');
   };
 
   function addExerciseToDay(name) {
@@ -1785,6 +2184,48 @@
     workout._open[name] = true;
     save();
   }
+
+  window.openCreateExercise = function() {
+    window.closeExercisePicker();
+    var grid = document.getElementById('muscleGrid');
+    if (!grid) return;
+    grid.innerHTML = Object.keys(MUSCLE_LABELS).map(function(key) {
+      return '<button class="muscle-btn ' + (key === 'back' ? 'selected' : '') + '" data-muscle="' + key + '" onclick="pickMuscle(\'' + key + '\')">' +
+        '<img src="' + ICONS[key] + '" alt="" onerror="this.style.opacity=\'0.3\'">' +
+        '<span>' + MUSCLE_LABELS[key] + '</span>' +
+        '</button>';
+    }).join('');
+    pendingMuscle = 'back';
+    var input = document.getElementById('newExName');
+    if (input) input.value = '';
+    document.getElementById('createBackdrop').classList.add('show');
+    setTimeout(function() { if (input) input.focus(); }, 250);
+  };
+
+  window.closeCreateExercise = function() {
+    document.getElementById('createBackdrop').classList.remove('show');
+  };
+
+  window.pickMuscle = function(key) {
+    pendingMuscle = key;
+    document.querySelectorAll('.muscle-btn').forEach(function(b) {
+      b.classList.toggle('selected', b.dataset.muscle === key);
+    });
+    if (tg) tg.HapticFeedback.selectionChanged();
+  };
+
+  window.saveNewExercise = function() {
+    var name = document.getElementById('newExName').value.trim();
+    if (!name) return alert('Введи название');
+    if (exercises.some(function(e) { return e.name === name; })) return alert('Такое упражнение уже есть');
+
+    exercises.push({ name: name, muscle: pendingMuscle, custom: true });
+    save();
+    addExerciseToDay(name);
+    window.closeCreateExercise();
+    window.render();
+    if (tg) tg.HapticFeedback.notificationOccurred('success');
+  };
 
   // ===== ПРОГРАММЫ =====
   window.openProgramsPicker = function() {
@@ -1914,10 +2355,9 @@
         skipped++;
         return;
       }
-      // Убедимся что упражнение есть в общем списке
       var exExists = exercises.some(function(e) { return e.name === ex.name; });
       if (!exExists) {
-        exercises.push({ name: ex.name, muscle: ex.muscle || 'back' });
+        exercises.push({ name: ex.name, muscle: ex.muscle || 'back', custom: true });
       }
       workout.sets.push({
         exercise: ex.name,
@@ -1979,49 +2419,6 @@
     }
     save();
     window.closeCommentModal();
-    window.render();
-    if (tg) tg.HapticFeedback.notificationOccurred('success');
-  };
-
-  // ===== СОЗДАНИЕ УПРАЖНЕНИЯ =====
-  window.openCreateExercise = function() {
-    window.closeExercisePicker();
-    var grid = document.getElementById('muscleGrid');
-    if (!grid) return;
-    grid.innerHTML = Object.keys(MUSCLE_LABELS).map(function(key) {
-      return '<button class="muscle-btn ' + (key === 'back' ? 'selected' : '') + '" data-muscle="' + key + '" onclick="pickMuscle(\'' + key + '\')">' +
-        '<img src="' + ICONS[key] + '" alt="" onerror="this.style.opacity=\'0.3\'">' +
-        '<span>' + MUSCLE_LABELS[key] + '</span>' +
-        '</button>';
-    }).join('');
-    pendingMuscle = 'back';
-    var input = document.getElementById('newExName');
-    if (input) input.value = '';
-    document.getElementById('createBackdrop').classList.add('show');
-    setTimeout(function() { if (input) input.focus(); }, 250);
-  };
-
-  window.closeCreateExercise = function() {
-    document.getElementById('createBackdrop').classList.remove('show');
-  };
-
-  window.pickMuscle = function(key) {
-    pendingMuscle = key;
-    document.querySelectorAll('.muscle-btn').forEach(function(b) {
-      b.classList.toggle('selected', b.dataset.muscle === key);
-    });
-    if (tg) tg.HapticFeedback.selectionChanged();
-  };
-
-  window.saveNewExercise = function() {
-    var name = document.getElementById('newExName').value.trim();
-    if (!name) return alert('Введи название');
-    if (exercises.some(function(e) { return e.name === name; })) return alert('Такое упражнение уже есть');
-
-    exercises.push({ name: name, muscle: pendingMuscle });
-    save();
-    addExerciseToDay(name);
-    window.closeCreateExercise();
     window.render();
     if (tg) tg.HapticFeedback.notificationOccurred('success');
   };
@@ -2097,7 +2494,6 @@
       if (!workout || !workout.sets || workout.sets.length === 0) return alert('Нет упражнений для сохранения');
       var name = prompt('Название программы:', 'Тренировка');
       if (!name) return;
-      // Уникальные упражнения + веса с последних подходов
       var seen = {};
       var exList = [];
       workout.sets.forEach(function(s) {
