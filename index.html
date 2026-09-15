@@ -227,7 +227,7 @@
     transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .month-grid.open {
-    max-height: 500px;
+    max-height: 600px;
   }
   .month-grid-inner {
     background: var(--bg-card);
@@ -567,6 +567,44 @@
   }
   .fab-primary:active { transform: scale(0.96); }
   .fab-primary svg { width: 24px; height: 24px; }
+
+  /* Таймер пилюля */
+  .timer-pill {
+    position: fixed;
+    bottom: calc(28px + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    z-index: 39;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    padding: 10px 20px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    display: none;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    transition: background 0.2s, color 0.2s, transform 0.2s;
+    opacity: 0;
+  }
+  .timer-pill.show {
+    display: flex;
+    opacity: 1;
+    transform: translateX(-50%) translateY(-90px);
+  }
+  .timer-pill.running {
+    background: var(--bg-card);
+    color: var(--text);
+  }
+  .timer-pill.done {
+    background: var(--success);
+    color: #fff;
+    border-color: var(--success);
+  }
 
   .sheet-backdrop {
     position: fixed;
@@ -1023,6 +1061,30 @@
     background: var(--accent);
     color: var(--accent-text);
   }
+
+  .settings-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 24px 4px 10px;
+  }
+
+  .settings-input {
+    width: 90px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    outline: none;
+    font-family: inherit;
+  }
+  .settings-input:focus { border-color: var(--text); }
 </style>
 </head>
 <body>
@@ -1084,6 +1146,8 @@
 
   <div class="page-title">Настройки</div>
 
+  <div class="settings-section-title">Внешний вид</div>
+
   <div class="settings-item">
     <div class="settings-item-label">Тема</div>
     <div class="toggle-group">
@@ -1100,7 +1164,32 @@
     </div>
   </div>
 
-  <div class="settings-item" style="margin-top:24px;" onclick="resetAll()">
+  <div class="settings-section-title">Таймер отдыха</div>
+
+  <div class="settings-item" onclick="toggleTimer()">
+    <div class="settings-item-label">Таймер</div>
+    <div class="toggle-group">
+      <button class="toggle-btn" id="timerOffBtn">Выкл</button>
+      <button class="toggle-btn" id="timerOnBtn">Вкл</button>
+    </div>
+  </div>
+
+  <div class="settings-item">
+    <div class="settings-item-label">Время отдыха (сек)</div>
+    <input type="number" class="settings-input" id="timerDurationInput" value="90" min="10" max="600" onchange="saveTimerDuration(this.value)">
+  </div>
+
+  <div class="settings-item" onclick="toggleVibration()">
+    <div class="settings-item-label">Вибрация</div>
+    <div class="toggle-group">
+      <button class="toggle-btn" id="vibOffBtn">Выкл</button>
+      <button class="toggle-btn" id="vibOnBtn">Вкл</button>
+    </div>
+  </div>
+
+  <div class="settings-section-title">Данные</div>
+
+  <div class="settings-item" onclick="resetAll()">
     <div class="settings-item-label" style="color:var(--danger);">Сбросить все данные</div>
   </div>
 </div>
@@ -1119,6 +1208,10 @@
       <line x1="5" y1="12" x2="19" y2="12"/>
     </svg>
   </button>
+</div>
+
+<div class="timer-pill" id="timerPill" onclick="onTimerPillTap()" oncontextmenu="onTimerPillLongTap(event); return false;">
+  <span id="timerPillText">⏱ 00:00</span>
 </div>
 
 <div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
@@ -1265,6 +1358,17 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="timerBreakBackdrop">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>Прервать отдых?</h3>
+    <div class="modal-text">Таймер будет остановлен</div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeTimerBreak()">Отмена</button>
+      <button class="btn-danger" onclick="confirmTimerBreak()">Прервать</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function() {
   var tg = window.Telegram ? window.Telegram.WebApp : null;
@@ -1340,7 +1444,6 @@
   var exercises = JSON.parse(localStorage.getItem('exercises') || 'null');
   if (!Array.isArray(exercises) || exercises.length === 0) exercises = DEFAULT_EXERCISES.slice();
 
-  // Помечаем вшитые упражнения флагом custom: false (если ещё нет)
   var defaultNames = {};
   DEFAULT_EXERCISES.forEach(function(e) { defaultNames[e.name] = true; });
   exercises.forEach(function(e) {
@@ -1365,6 +1468,9 @@
   if (typeof settings !== 'object' || settings === null || !settings.theme) {
     settings = { theme: 'dark', unit: 'kg' };
   }
+  if (typeof settings.timerEnabled === 'undefined') settings.timerEnabled = false;
+  if (typeof settings.timerDuration === 'undefined') settings.timerDuration = 90;
+  if (typeof settings.vibration === 'undefined') settings.vibration = true;
 
   var selectedDate = new Date();
   var weekStart = getMonday(new Date());
@@ -1373,6 +1479,16 @@
   var pendingMuscle = 'back';
   var openSwipeEl = null;
   var pendingDeleteExerciseName = null;
+  var longPressHandled = false;
+
+  // Таймер
+  var timerState = {
+    running: false,
+    done: false,
+    endTime: 0,
+    intervalId: null,
+    lastExercise: null
+  };
 
   function getMonday(d) {
     var date = new Date(d);
@@ -1460,8 +1576,6 @@
   // ===== Стрик =====
   function getStreak() {
     if (workoutHistory.length === 0) return 0;
-
-    // Собираем уникальные даты тренировок (только с подходами)
     var dates = {};
     workoutHistory.forEach(function(w) {
       if (w.sets && w.sets.length > 0) {
@@ -1471,11 +1585,8 @@
     var keys = Object.keys(dates);
     if (keys.length === 0) return 0;
 
-    // Идём от самой свежей даты назад
     var today = new Date();
     today.setHours(0,0,0,0);
-
-    // Если сегодня тренировки нет — начинаем с вчера
     var checkDate = new Date(today);
     if (!dates[dateKey(checkDate)]) {
       checkDate.setDate(checkDate.getDate() - 1);
@@ -1503,6 +1614,172 @@
     } else {
       el.style.display = 'none';
     }
+  }
+
+  // ===== ТАЙМЕР =====
+  function renderTimerPill() {
+    var pill = document.getElementById('timerPill');
+    var text = document.getElementById('timerPillText');
+    if (!pill || !text) return;
+
+    if (!settings.timerEnabled) {
+      pill.classList.remove('show');
+      return;
+    }
+
+    pill.classList.add('show');
+
+    if (timerState.done) {
+      pill.classList.remove('running');
+      pill.classList.add('done');
+      text.textContent = '✓ Готово!';
+    } else if (timerState.running) {
+      pill.classList.remove('done');
+      pill.classList.add('running');
+      var remaining = Math.max(0, Math.ceil((timerState.endTime - Date.now()) / 1000));
+      text.textContent = '⏱ ' + formatTime(remaining);
+    } else {
+      pill.classList.remove('running', 'done');
+      text.textContent = '⏱ 00:00';
+    }
+  }
+
+  function formatTime(sec) {
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }
+
+  function startTimer() {
+    if (!settings.timerEnabled) return;
+    timerState.running = true;
+    timerState.done = false;
+    timerState.endTime = Date.now() + settings.timerDuration * 1000;
+
+    if (timerState.intervalId) clearInterval(timerState.intervalId);
+    timerState.intervalId = setInterval(tickTimer, 250);
+    renderTimerPill();
+  }
+
+  function stopTimer(silent) {
+    timerState.running = false;
+    timerState.done = false;
+    if (timerState.intervalId) {
+      clearInterval(timerState.intervalId);
+      timerState.intervalId = null;
+    }
+    if (!silent) renderTimerPill();
+  }
+
+  function tickTimer() {
+    var remaining = Math.ceil((timerState.endTime - Date.now()) / 1000);
+    if (remaining <= 0) {
+      // Время вышло
+      if (timerState.intervalId) {
+        clearInterval(timerState.intervalId);
+        timerState.intervalId = null;
+      }
+      timerState.running = false;
+      timerState.done = true;
+      if (settings.vibration && tg) {
+        try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+      } else if (settings.vibration && navigator.vibrate) {
+        navigator.vibrate(200);
+      }
+      renderTimerPill();
+      // Через 3 секунды скрываем "Готово"
+      setTimeout(function() {
+        if (timerState.done) {
+          timerState.done = false;
+          renderTimerPill();
+        }
+      }, 3000);
+    } else {
+      renderTimerPill();
+    }
+  }
+
+  window.onTimerPillTap = function() {
+    if (timerState.done) {
+      timerState.done = false;
+      renderTimerPill();
+      return;
+    }
+    if (timerState.running) {
+      // Тап на активный — быстрый сброс без подтверждения? Нет, у нас долгий тап на прерывание.
+      // Пусть обычный тап просто прервёт с подтверждением
+      window.openTimerBreak();
+      return;
+    }
+    // Пустая пилюля — запускаем
+    startTimer();
+  };
+
+  window.onTimerPillLongTap = function(e) {
+    if (e) e.preventDefault();
+    if (timerState.running) {
+      window.openTimerBreak();
+    }
+  };
+
+  window.openTimerBreak = function() {
+    document.getElementById('timerBreakBackdrop').classList.add('show');
+  };
+  window.closeTimerBreak = function() {
+    document.getElementById('timerBreakBackdrop').classList.remove('show');
+  };
+  window.confirmTimerBreak = function() {
+    window.closeTimerBreak();
+    stopTimer();
+    if (tg) tg.HapticFeedback.impactOccurred('medium');
+  };
+
+  // ===== Настройки таймера =====
+  window.toggleTimer = function() {
+    settings.timerEnabled = !settings.timerEnabled;
+    save();
+    updateTimerSettingsUI();
+    if (!settings.timerEnabled) {
+      stopTimer();
+      document.getElementById('timerPill').classList.remove('show');
+    } else {
+      renderTimerPill();
+    }
+    if (tg) tg.HapticFeedback.selectionChanged();
+  };
+
+  window.saveTimerDuration = function(val) {
+    var n = parseInt(val);
+    if (isNaN(n) || n < 10) n = 10;
+    if (n > 600) n = 600;
+    settings.timerDuration = n;
+    save();
+    var input = document.getElementById('timerDurationInput');
+    if (input) input.value = n;
+  };
+
+  window.toggleVibration = function() {
+    settings.vibration = !settings.vibration;
+    save();
+    updateTimerSettingsUI();
+    if (tg) tg.HapticFeedback.selectionChanged();
+  };
+
+  function updateTimerSettingsUI() {
+    var off = document.getElementById('timerOffBtn');
+    var on = document.getElementById('timerOnBtn');
+    var vibOff = document.getElementById('vibOffBtn');
+    var vibOn = document.getElementById('vibOnBtn');
+    var durInput = document.getElementById('timerDurationInput');
+    if (off && on) {
+      off.classList.toggle('active', !settings.timerEnabled);
+      on.classList.toggle('active', settings.timerEnabled);
+    }
+    if (vibOff && vibOn) {
+      vibOff.classList.toggle('active', !settings.vibration);
+      vibOn.classList.toggle('active', settings.vibration);
+    }
+    if (durInput) durInput.value = settings.timerDuration;
   }
 
   window.applyTheme = function() {
@@ -1535,6 +1812,7 @@
     window.renderMonthGrid();
     window.renderContent();
     renderStreak();
+    renderTimerPill();
   };
 
   window.renderMonthTitle = function() {
@@ -1585,7 +1863,7 @@
     var month = monthViewDate.getMonth();
     var firstDay = new Date(year, month, 1);
     var lastDay = new Date(year, month + 1, 0);
-    var startOffset = (firstDay.getDay() + 6) % 7; // 0 = Пн, 6 = Вс
+    var startOffset = (firstDay.getDay() + 6) % 7;
     var daysInMonth = lastDay.getDate();
     var today = new Date();
 
@@ -1620,7 +1898,6 @@
   window.selectDayFromMonth = function(key) {
     var parts = key.split('-').map(Number);
     selectedDate = new Date(parts[0], parts[1]-1, parts[2], 12, 0, 0);
-    // Закрываем шторку
     monthViewOpen = false;
     var btn = document.getElementById('calExpandBtn');
     var grid = document.getElementById('monthGrid');
@@ -1636,7 +1913,6 @@
     var grid = document.getElementById('monthGrid');
 
     if (monthViewOpen) {
-      // Синхронизируем месяц с текущей неделей
       monthViewDate = new Date(weekStart.getFullYear(), weekStart.getMonth(), 1);
       if (btn) btn.classList.add('open');
       if (grid) grid.classList.add('open');
@@ -1862,6 +2138,11 @@
     var num = parseFloat(value);
     workout.sets[index][field] = (isNaN(num) || num <= 0) ? 0 : num;
     save();
+
+    // Таймер: если введены повторения и значение > 0, запускаем
+    if (field === 'reps' && workout.sets[index].reps > 0) {
+      startTimer();
+    }
   };
 
   window.addSetToExercise = function(exName) {
@@ -2022,7 +2303,6 @@
     document.getElementById('pickerBackdrop').classList.remove('show');
   };
 
-  // Сортировка: группируем по muscle, внутри группы по алфавиту
   function sortExercises(list) {
     var grouped = {};
     list.forEach(function(e) {
@@ -2054,15 +2334,10 @@
     }
 
     var sorted = sortExercises(filtered);
-
-    // Если поиск — показываем без заголовков групп
     var html = '';
     if (filter) {
-      html = sorted.map(function(ex) {
-        return renderPickerItem(ex);
-      }).join('');
+      html = sorted.map(function(ex) { return renderPickerItem(ex); }).join('');
     } else {
-      // Группируем для отображения с заголовками
       var byMuscle = {};
       sorted.forEach(function(ex) {
         if (!byMuscle[ex.muscle]) byMuscle[ex.muscle] = [];
@@ -2071,25 +2346,22 @@
       MUSCLE_ORDER.forEach(function(m) {
         if (byMuscle[m] && byMuscle[m].length > 0) {
           html += '<div class="ex-group-label">' + MUSCLE_LABELS[m] + '</div>';
-          html += byMuscle[m].map(function(ex) {
-            return renderPickerItem(ex);
-          }).join('');
+          html += byMuscle[m].map(function(ex) { return renderPickerItem(ex); }).join('');
         }
       });
     }
 
     list.innerHTML = html;
 
-    // Долгий тап
     list.querySelectorAll('.ex-picker-item').forEach(function(el) {
       var name = el.dataset.exName;
       var timer = null;
 
-      function startLongPress(e) {
+      function startLongPress() {
         timer = setTimeout(function() {
           timer = null;
           if (tg) tg.HapticFeedback.impactOccurred('medium');
-          openDeleteExercise(name);
+          window.openDeleteExercise(name);
         }, 500);
       }
       function cancelLongPress() {
@@ -2122,7 +2394,6 @@
   };
 
   window.pickExercise = function(name) {
-    // Проверяем, не был ли это долгий тап — если да, не добавляем
     if (longPressHandled) {
       longPressHandled = false;
       return;
@@ -2133,14 +2404,10 @@
     if (tg) tg.HapticFeedback.impactOccurred('light');
   };
 
-  // Флаг чтобы не добавлять упражнение после долгого тапа
-  var longPressHandled = false;
-
   window.openDeleteExercise = function(name) {
     var ex = exercises.find(function(e) { return e.name === name; });
     if (!ex) return;
     if (!ex.custom) {
-      // Вшитое — нельзя удалить
       if (tg) tg.HapticFeedback.notificationOccurred('warning');
       return;
     }
@@ -2167,7 +2434,8 @@
     pendingDeleteExerciseName = null;
     document.getElementById('deleteExerciseBackdrop').classList.remove('show');
     longPressHandled = false;
-    renderExercisePicker(document.getElementById('exSearch') ? document.getElementById('exSearch').value : '');
+    var search = document.getElementById('exSearch');
+    renderExercisePicker(search ? search.value : '');
     if (tg) tg.HapticFeedback.notificationOccurred('success');
   };
 
@@ -2525,14 +2793,19 @@
   };
 
   window.openSettings = function() {
+    updateTimerSettingsUI();
     document.getElementById('screenMain').classList.remove('active');
     document.getElementById('screenSettings').classList.add('active');
     document.getElementById('floatingBar').style.display = 'none';
+    var pill = document.getElementById('timerPill');
+    if (pill) pill.style.display = 'none';
   };
   window.closeSettings = function() {
     document.getElementById('screenSettings').classList.remove('active');
     document.getElementById('screenMain').classList.add('active');
     document.getElementById('floatingBar').style.display = 'flex';
+    var pill = document.getElementById('timerPill');
+    if (pill) pill.style.display = '';
     window.render();
   };
 
@@ -2549,6 +2822,7 @@
   });
 
   window.applyTheme();
+  updateTimerSettingsUI();
   window.render();
 })();
 </script>
