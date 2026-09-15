@@ -123,6 +123,9 @@
     opacity: 0;
     pointer-events: none;
   }
+  .cal-week.hidden {
+    display: none;
+  }
 
   .month-grid {
     background: var(--bg-card);
@@ -2175,7 +2178,12 @@
     var week = document.getElementById('calWeek');
     if (btn) btn.classList.remove('open');
     if (grid) grid.classList.remove('fade-in');
-    if (week) week.classList.remove('fade-out');
+    if (week) {
+      week.classList.remove('hidden');
+      setTimeout(function() {
+        if (!monthViewOpen && week) week.classList.remove('fade-out');
+      }, 20);
+    }
     window.render();
     if (tg) tg.HapticFeedback.selectionChanged();
   };
@@ -2189,15 +2197,25 @@
     if (monthViewOpen) {
       monthViewDate = new Date(weekStart.getFullYear(), weekStart.getMonth(), 1);
       if (btn) btn.classList.add('open');
-      if (grid) grid.classList.add('fade-in');
       if (week) week.classList.add('fade-out');
+      // Убираем неделю из потока через 300мс (после fade)
+      setTimeout(function() {
+        if (monthViewOpen && week) week.classList.add('hidden');
+      }, 300);
+      if (grid) grid.classList.add('fade-in');
       window.renderMonthTitle();
       window.renderMonthGrid();
       renderStreak();
     } else {
       if (btn) btn.classList.remove('open');
       if (grid) grid.classList.remove('fade-in');
-      if (week) week.classList.remove('fade-out');
+      if (week) {
+        week.classList.remove('hidden');
+        // Даём браузеру отрисовать неделю перед fade-in
+        setTimeout(function() {
+          if (!monthViewOpen && week) week.classList.remove('fade-out');
+        }, 20);
+      }
       window.renderMonthTitle();
       window.renderCalendar();
       renderStreak();
