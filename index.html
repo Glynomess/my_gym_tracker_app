@@ -117,16 +117,20 @@
     border-radius: var(--radius);
     padding: 14px 8px;
     border: 1px solid var(--border);
-    transition: opacity 0.3s ease;
+    opacity: 1;
+    max-height: 200px;
+    overflow: hidden;
+    transition: opacity 0.4s ease, max-height 0.4s ease, padding 0.4s ease, border-width 0.4s ease;
   }
   .cal-week.fade-out {
     opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
     pointer-events: none;
   }
-  .cal-week.hidden {
-    display: none;
-  }
-
+  
   .month-grid {
     background: var(--bg-card);
     border-radius: var(--radius);
@@ -142,15 +146,15 @@
     padding-bottom: 0;
     margin: 0;
     border-width: 0;
-    transition: opacity 0.3s ease, max-height 0.4s ease, padding 0.3s ease;
+    transition: opacity 0.4s ease, max-height 0.5s ease, padding 0.4s ease, border-width 0.4s ease;
   }
   .month-grid.fade-in {
     opacity: 1;
-    max-height: 500px;
+    max-height: 600px;
     padding: 14px 8px;
     border-width: 1px;
   }
-
+  
   .cal-arrow {
     width: 32px;
     height: 32px;
@@ -2150,6 +2154,7 @@
       html += '<div class="month-day empty"></div>';
     }
 
+    var totalCells = 0;
     for (var d = 1; d <= daysInMonth; d++) {
       var dateObj = new Date(year, month, d, 12, 0, 0);
       var isToday = sameDay(dateObj, today);
@@ -2164,6 +2169,13 @@
       if (isSelected && !isToday) cls += ' selected';
 
       html += '<div class="' + cls + '" onclick="selectDayFromMonth(\'' + dateKey(dateObj) + '\')">' + d + '</div>';
+      totalCells++;
+    }
+
+    // Добиваем пустыми ячейками до 42 (6 строк × 7 дней)
+    var allCells = startOffset + totalCells;
+    for (var k = allCells; k < 42; k++) {
+      html += '<div class="month-day empty"></div>';
     }
 
     container.innerHTML = html;
@@ -2178,12 +2190,7 @@
     var week = document.getElementById('calWeek');
     if (btn) btn.classList.remove('open');
     if (grid) grid.classList.remove('fade-in');
-    if (week) {
-      week.classList.remove('hidden');
-      setTimeout(function() {
-        if (!monthViewOpen && week) week.classList.remove('fade-out');
-      }, 20);
-    }
+    if (week) week.classList.remove('fade-out');
     window.render();
     if (tg) tg.HapticFeedback.selectionChanged();
   };
@@ -2198,10 +2205,6 @@
       monthViewDate = new Date(weekStart.getFullYear(), weekStart.getMonth(), 1);
       if (btn) btn.classList.add('open');
       if (week) week.classList.add('fade-out');
-      // Убираем неделю из потока через 300мс (после fade)
-      setTimeout(function() {
-        if (monthViewOpen && week) week.classList.add('hidden');
-      }, 300);
       if (grid) grid.classList.add('fade-in');
       window.renderMonthTitle();
       window.renderMonthGrid();
@@ -2209,13 +2212,7 @@
     } else {
       if (btn) btn.classList.remove('open');
       if (grid) grid.classList.remove('fade-in');
-      if (week) {
-        week.classList.remove('hidden');
-        // Даём браузеру отрисовать неделю перед fade-in
-        setTimeout(function() {
-          if (!monthViewOpen && week) week.classList.remove('fade-out');
-        }, 20);
-      }
+      if (week) week.classList.remove('fade-out');
       window.renderMonthTitle();
       window.renderCalendar();
       renderStreak();
