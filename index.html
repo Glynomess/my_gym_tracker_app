@@ -108,15 +108,44 @@
   .icon-btn:active { transform: scale(0.92); opacity: 0.7; }
   .icon-btn svg { width: 20px; height: 20px; }
 
-  .calendar {
-    background: var(--bg-card);
-    border-radius: var(--radius);
-    padding: 14px 8px;
-    margin-bottom: 0;
+  /* Календарь */
+  .cal-week {
     display: flex;
     align-items: center;
     gap: 4px;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 14px 8px;
     border: 1px solid var(--border);
+    transition: opacity 0.3s ease;
+  }
+  .cal-week.fade-out {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .month-grid {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 14px 8px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin: 0;
+    border-width: 0;
+    transition: opacity 0.3s ease, max-height 0.4s ease, padding 0.3s ease;
+  }
+  .month-grid.fade-in {
+    opacity: 1;
+    max-height: 500px;
+    padding: 14px 8px;
+    border-width: 1px;
   }
 
   .cal-arrow {
@@ -191,74 +220,7 @@
     background: var(--bg-elevated);
   }
 
-  .cal-expand-row {
-    display: flex;
-    justify-content: center;
-    padding: 4px 0 20px;
-  }
-  .cal-expand-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    width: 40px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    padding: 0;
-    transition: color 0.15s;
-  }
-  .cal-expand-btn:active { color: var(--text); }
-  .cal-expand-btn svg {
-    width: 16px;
-    height: 16px;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .cal-expand-btn.open svg {
-    transform: rotate(180deg);
-  }
-
-  .cal-days.week-hidden .cal-day {
-    opacity: 0;
-    transform: scale(0.9);
-    transition: opacity 0.25s, transform 0.25s;
-  }
-  .cal-days.month-mode .cal-day {
-    display: none;
-  }
-  .cal-month-label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--text);
-    transition: opacity 0.25s;
-  }
-
-  .cal-week {
-    transition: opacity 0.3s ease;
-  }
-  .cal-week.fade-out {
-    opacity: 0;
-    pointer-events: none;
-    position: absolute;
-    left: -9999px;
-  }
-
-  .month-grid {
-    opacity: 0;
-    max-height: 0;
-    overflow: hidden;
-    transition: opacity 0.3s ease, max-height 0.4s ease;
-  }
-  .month-grid.fade-in {
-    opacity: 1;
-    max-height: 600px;
-  }
-
+  /* Месячная сетка — дни */
   .month-day-name {
     font-size: 11px;
     color: var(--text-muted);
@@ -292,31 +254,33 @@
   .month-day.today.has-workout { border-color: var(--accent); }
   .month-day.selected:not(.today) { background: var(--bg-elevated); }
 
-  .month-nav {
+  /* Стрелка раскрытия — между блоками */
+  .cal-expand-row {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    padding: 0 4px;
+    justify-content: center;
+    padding: 6px 0 20px;
   }
-  .month-nav-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+  .cal-expand-btn {
     background: transparent;
     border: none;
     color: var(--text-muted);
+    width: 40px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     padding: 0;
+    transition: color 0.15s;
   }
-  .month-nav-btn:active { color: var(--text); }
-  .month-nav-btn svg { width: 18px; height: 18px; }
-  .month-nav-title {
-    font-size: 17px;
-    font-weight: 700;
+  .cal-expand-btn:active { color: var(--text); }
+  .cal-expand-btn svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .cal-expand-btn.open svg {
+    transform: rotate(180deg);
   }
 
   .empty-state {
@@ -1155,7 +1119,6 @@
   }
   .settings-input:focus { border-color: var(--text); }
 
-  /* Статистика */
   .stats-title {
     font-size: 20px;
     font-weight: 700;
@@ -1251,23 +1214,21 @@
   </div>
 
   <div class="cal-week" id="calWeek">
-    <div class="calendar">
-      <button class="cal-arrow" onclick="shiftWeek(-1)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 18 9 12 15 6"/>
-        </svg>
-      </button>
-      <div class="cal-days" id="calDays"></div>
-      <button class="cal-arrow" onclick="shiftWeek(1)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="9 18 15 12 9 6"/>
-        </svg>
-      </button>
-    </div>
+    <button class="cal-arrow" onclick="shiftWeek(-1)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
+    <div class="cal-days" id="calDays"></div>
+    <button class="cal-arrow" onclick="shiftWeek(1)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </button>
   </div>
 
   <div class="month-grid" id="monthGrid">
-    <div class="month-grid-inner" id="monthGridInner"></div>
+    <div id="monthGridInner" style="display: contents;"></div>
   </div>
 
   <div class="cal-expand-row">
@@ -1661,7 +1622,6 @@
   var pendingDeleteExerciseName = null;
   var longPressHandled = false;
 
-  // Таймер
   var timerState = {
     running: false,
     done: false,
@@ -1669,7 +1629,6 @@
     intervalId: null
   };
 
-  // Статистика
   var statsExerciseName = null;
   var statsPeriod = '3months';
 
@@ -1756,7 +1715,6 @@
     };
   }
 
-  // ===== Стрик =====
   function getStreakInfo() {
     if (workoutHistory.length === 0) return null;
     var dates = {};
@@ -1831,7 +1789,6 @@
     }
   }
 
-  // ===== ТАЙМЕР =====
   function renderTimerPill() {
     var pill = document.getElementById('timerPill');
     var text = document.getElementById('timerPillText');
@@ -1991,7 +1948,6 @@
     if (durInput) durInput.value = settings.timerDuration;
   }
 
-  // ===== СТАТИСТИКА =====
   window.openStats = function(exName) {
     statsExerciseName = exName;
     statsPeriod = '3months';
@@ -2231,7 +2187,6 @@
     var week = document.getElementById('calWeek');
 
     if (monthViewOpen) {
-      // Открываем месяц
       monthViewDate = new Date(weekStart.getFullYear(), weekStart.getMonth(), 1);
       if (btn) btn.classList.add('open');
       if (grid) grid.classList.add('fade-in');
@@ -2240,7 +2195,6 @@
       window.renderMonthGrid();
       renderStreak();
     } else {
-      // Закрываем месяц
       if (btn) btn.classList.remove('open');
       if (grid) grid.classList.remove('fade-in');
       if (week) week.classList.remove('fade-out');
@@ -2427,7 +2381,6 @@
 
   window.shiftWeek = function(dir) {
     if (monthViewOpen) {
-      // Листаем месяцы
       monthViewDate.setMonth(monthViewDate.getMonth() + dir);
       var m = monthViewDate.getMonth();
       var y = monthViewDate.getFullYear();
@@ -2436,7 +2389,6 @@
       window.renderMonthGrid();
       renderStreak();
     } else {
-      // Листаем недели
       weekStart.setDate(weekStart.getDate() + dir * 7);
       closeAllSwipes();
       window.render();
@@ -2838,7 +2790,6 @@
     if (tg) tg.HapticFeedback.notificationOccurred('success');
   };
 
-  // ===== ПРОГРАММЫ =====
   window.openProgramsPicker = function() {
     renderProgramsList();
     document.getElementById('programsBackdrop').classList.add('show');
@@ -3005,7 +2956,6 @@
     if (tg) tg.HapticFeedback.notificationOccurred('success');
   };
 
-  // ===== КОММЕНТАРИЙ =====
   window.openCommentModal = function() {
     var workout = workoutHistory.find(function(w) { return sameDay(new Date(w.date), selectedDate); });
     if (!workout) return;
@@ -3034,7 +2984,6 @@
     if (tg) tg.HapticFeedback.notificationOccurred('success');
   };
 
-  // ===== ШТОРКА =====
   window.openSheet = function() {
     document.getElementById('sheetBackdrop').classList.add('show');
     document.getElementById('sheet').classList.add('show');
@@ -3153,7 +3102,7 @@
       if (e.target === m) m.classList.remove('show');
     });
   });
-  
+
   // Свайп по месячной сетке для листания месяцев
   (function attachMonthSwipe() {
     var grid = document.getElementById('monthGrid');
@@ -3182,14 +3131,13 @@
       var dx = e.changedTouches[0].clientX - startX;
       if (Math.abs(dx) < 50) return;
       if (dx < 0) {
-        // Свайп влево — следующий месяц
         window.shiftWeek(1);
       } else {
-        // Свайп вправо — предыдущий месяц
         window.shiftWeek(-1);
       }
     }, { passive: true });
   })();
+
   window.applyTheme();
   updateTimerSettingsUI();
   window.render();
