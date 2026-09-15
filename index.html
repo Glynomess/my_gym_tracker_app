@@ -2433,8 +2433,13 @@
     if (volEl) volEl.textContent = Math.round(p.volume);
     if (wEl) wEl.textContent = p.maxWeight;
 
-    tt.classList.add('show');
+    // Если плашка уже показана — просто обновляем контент, не мигаем
+    var wasShowing = tt.classList.contains('show');
+    if (!wasShowing) {
+      tt.classList.add('show');
+    }
 
+    // Сбрасываем старый таймер, ставим новый на 3 секунды
     if (tooltipTimeoutId) clearTimeout(tooltipTimeoutId);
     tooltipTimeoutId = setTimeout(function() {
       tt.classList.remove('show');
